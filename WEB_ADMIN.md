@@ -233,3 +233,90 @@ No mockup is specified for the admin in `Requirement.html`. The Flutter app's da
 accent) is **not** a requirement for this internal tool, but reusing it is a reasonable
 default for brand consistency unless/until the user specifies a different admin-specific
 design — confirm before investing significant UI polish effort either way.
+
+## 10. Deployment (Firebase Hosting)
+
+`Requirement.html` line 1.5 and this doc's §1 both commit to **Firebase Hosting** as the
+deploy target — that's correct, but note **plain static Firebase Hosting is not enough on
+its own**: §4's Server Actions (Firestore writes via the Admin SDK, ID-token verification)
+require a server runtime, not a static export. Deploy via **Firebase Hosting's Next.js web
+framework support**, which packages the SSR/Server Action backend as a Cloud Function/Cloud
+Run service behind Hosting's CDN automatically — `firebase deploy --only hosting` still
+works as documented, just make sure the framework-aware setup below is used instead of
+`next export`.
+
+### 10.1 One-time project setup
+
+1. **Confirm the target Firebase project is on the Blaze (pay-as-you-go) plan.** Same
+   requirement as the Flutter app's Cloud Functions (`CLAUDE.md` §2b/§4) — the SSR backend
+   runs as a Cloud Function/Cloud Run service under the hood, which cannot deploy on the
+   free Spark plan. Check at
+   `https://console.firebase.google.com/project/<project-id>/usage`.
+2. **Decide which Firebase project this admin lives in.** It almost certainly must be the
+   **same project** as the Flutter app (`thaishield-ai-790eb` per `CLAUDE.md`), since it
+   writes to the exact Firestore instance the app reads from — don't create a separate
+   project for this admin.
+3. Install/update the Firebase CLI and log in (once per machine):
+   ```bash
+   npm install -g firebase-tools
+   firebase login
+   ```
+4. **(Recommended) create a dedicated Hosting site** for the admin rather than reusing the
+   project's default Hosting site, so it gets its own URL/subdomain and doesn't collide with
+   anything else deployed to the same project later:
+   ```bash
+   firebase hosting:sites:create thaishield-admin
+   ```
+5. From the Next.js project root, run:
+   ```bash
+   firebase init hosting
+   ```
+   - Select the existing project (`thaishield-ai-790eb`).
+   - When asked *"What do you want to use as your public directory?"* / *"Do you want to
+     use a web framework?"* — **answer yes to the web framework prompt**; the CLI
+     auto-detects Next.js and configures `firebase.json` + `apphosting`/`.firebase/` output
+     config to build and serve it with SSR support. Do not manually set the public
+     directory to a static `next export` folder.
+   - If prompted for the Hosting site, pick the `thaishield-admin` site created in step 4.
+
+### 10.2 Secrets & environment variables
+
+Never commit the service account key or API keys (already enforced by `.gitignore`). The
+SSR backend runs as a Cloud Function, so runtime secrets are injected the same way as the
+Flutter app's `syncTravelAlerts` function (`CLAUDE.md` §2b/§4):
+```bash
+firebase functions:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY
+firebase functions:secrets:set GOOGLE_MAPS_API_KEY
+```
+Reference these as environment variables in the Next.js server code (`process.env.…`) —
+never `NEXT_PUBLIC_`-prefixed, since that would bundle them into client-side JS.
+
+### 10.3 Deploy
+
+```bash
+# from the Next.js project root
+npm run build      # sanity-check the build locally first
+firebase deploy --only hosting
+```
+This builds the app and deploys both the static assets and the SSR backend function in one
+step. Firebase prints the live Hosting URL (e.g. `https://thaishield-admin.web.app`) when
+it finishes.
+
+### 10.4 Verify after every deploy
+
+- Sign in with a `@thaishieldapp.com` Google account on the **live** URL and confirm the
+  `hd`-claim check (§4) actually rejects a non-domain account — test this in an incognito
+  window with a personal Google account.
+- Exercise all three CRUD screens once against the live site, then confirm the Flutter app
+  still reads the changes correctly (per §8 step 5's QA pass).
+- Check the Firebase Console **Functions** tab for the new SSR backend function's logs if
+  anything 500s — Server Action errors surface there, not in `firebase deploy` output.
+
+### 10.5 Optional: CI/CD via GitHub Actions
+
+Once the GitHub repo is pushed, `firebase init hosting:github` can wire up automatic
+**preview channel deploys on every PR** and **production deploy on merge to `main`** using
+the `FirebaseExtended/action-hosting-deploy` GitHub Action — worth setting up once the repo
+exists on GitHub, so line-item 1.5's "deploy to production" isn't a manual step going
+forward. Not required for the first deploy; can be added later without changing anything
+above.
