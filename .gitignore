@@ -46,3 +46,6 @@ serviceAccountKey.json
 
 # local reference exports (Google Sheets HTML export artifacts, not project source)
 resources/
+
+# Claude Code local (machine-specific) settings — not shared project config
+.claude/settings.local.json
