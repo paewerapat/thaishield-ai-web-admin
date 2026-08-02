@@ -1,0 +1,125 @@
+"use server";
+
+import { randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { getAdminFirestore, getAdminStorage } from "@/lib/firebase/admin";
+import {
+  assertValidImageFile,
+  extensionForImageType,
+  partnerLocationInputSchema,
+  type PartnerLocation,
+} from "@/lib/schemas/partner-locations";
+import { actionError, type ActionResult } from "./action-result";
+import { requireAdminSession } from "./require-admin";
+
+const COLLECTION = "partner_locations";
+const LIST_PATH = "/admin/partner-locations";
+
+export async function listPartnerLocations(): Promise<PartnerLocation[]> {
+  await requireAdminSession();
+  const snapshot = await getAdminFirestore()
+    .collection(COLLECTION)
+    .orderBy("name")
+    .get();
+  return snapshot.docs.map((doc) => doc.data() as PartnerLocation);
+}
+
+export async function getPartnerLocation(
+  id: string,
+): Promise<PartnerLocation | null> {
+  await requireAdminSession();
+  const doc = await getAdminFirestore().collection(COLLECTION).doc(id).get();
+  return doc.exists ? (doc.data() as PartnerLocation) : null;
+}
+
+/**
+ * Uploads a real partner photo to Firebase Storage (WEB_ADMIN.md §2/§3 —
+ * replaces the Flutter app's current hotlinked Pexels placeholders) and
+ * returns its public download URL to store as `image_url`.
+ */
+async function uploadPartnerImage(id: string, file: File): Promise<string> {
+  assertValidImageFile(file);
+
+  const extension = extensionForImageType(file.type);
+  const storagePath = `partner_locations/${id}/${randomUUID()}.${extension}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const bucket = getAdminStorage().bucket();
+  const storageFile = bucket.file(storagePath);
+  await storageFile.save(buffer, { contentType: file.type });
+  await storageFile.makePublic();
+
+  return `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+}
+
+function extractFields(formData: FormData) {
+  return {
+    id: String(formData.get("id") ?? ""),
+    name: String(formData.get("name") ?? ""),
+    lat: String(formData.get("lat") ?? ""),
+    lng: String(formData.get("lng") ?? ""),
+    type: String(formData.get("type") ?? ""),
+    rating: String(formData.get("rating") ?? ""),
+    is_verified: formData.get("is_verified") === "true",
+    price_tier: String(formData.get("price_tier") ?? ""),
+    image_url: String(formData.get("existing_image_url") ?? ""),
+  };
+}
+
+export async function savePartnerLocation(
+  formData: FormData,
+  mode: "create" | "edit",
+  originalId?: string,
+): Promise<ActionResult> {
+  try {
+    await requireAdminSession();
+    const fields = extractFields(formData);
+    const parsed = partnerLocationInputSchema.parse(fields);
+
+    if (mode === "edit" && originalId && parsed.id !== originalId) {
+      return { ok: false, error: "Partner location ID cannot be changed." };
+    }
+
+    const ref = getAdminFirestore().collection(COLLECTION).doc(parsed.id);
+
+    if (mode === "create") {
+      const existing = await ref.get();
+      if (existing.exists) {
+        return {
+          ok: false,
+          error: `A partner location with id "${parsed.id}" already exists.`,
+        };
+      }
+    }
+
+    const imageFile = formData.get("image");
+    let imageUrl = parsed.image_url;
+    if (imageFile instanceof File && imageFile.size > 0) {
+      imageUrl = await uploadPartnerImage(parsed.id, imageFile);
+    }
+
+    await ref.set({ ...parsed, image_url: imageUrl });
+    revalidatePath(LIST_PATH);
+    return { ok: true };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function deletePartnerLocation(id: string): Promise<ActionResult> {
+  try {
+    await requireAdminSession();
+    await getAdminFirestore().collection(COLLECTION).doc(id).delete();
+    revalidatePath(LIST_PATH);
+    return { ok: true };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+export async function deletePartnerLocationFormAction(
+  formData: FormData,
+): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  await deletePartnerLocation(id);
+}
