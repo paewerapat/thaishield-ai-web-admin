@@ -3,10 +3,7 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { requireEnv } from "@/lib/env";
-
-/** Same value the server-side session check (lib/auth) must enforce — see WEB_ADMIN.md §4. */
-export const ADMIN_ALLOWED_DOMAIN =
-  process.env.NEXT_PUBLIC_ADMIN_ALLOWED_DOMAIN || "thaishieldapp.com";
+import { ADMIN_ALLOWED_DOMAIN } from "@/lib/auth/config";
 
 function getFirebaseClientConfig() {
   return {
