@@ -7,7 +7,9 @@ The Flutter app's own rules and data model live in `CLAUDE.md` in this same fold
 that file first**, since this admin exists only to manage the Firestore collections the app
 already reads from. Follow both documents; where they overlap (Firestore schema, legal
 wording, security rules), `CLAUDE.md` is the source of truth and this file must stay
-consistent with it.
+consistent with it. See `STATUS.md` for what's actually built vs. still pending real
+secrets/live testing — check it before assuming something described here already works
+end-to-end.
 
 ## 0. What this project is (and isn't)
 
