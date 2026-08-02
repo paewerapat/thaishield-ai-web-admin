@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.1.1",
     "firebase": "^12.17.0",
     "firebase-admin": "^14.2.0",
     "next": "14.2.35",
@@ -21,6 +22,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/google.maps": "^3.65.4",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
