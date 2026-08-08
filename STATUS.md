@@ -5,7 +5,7 @@ testing, per the plan in `WEB_ADMIN.md`. Update this file whenever an item
 below moves from unverified to verified (or a new gap is found) — don't let
 it go stale.
 
-Last updated: 2026-08-02. 70 unit tests passing (`npm test`); `next build`,
+Last updated: 2026-08-08. 76 unit tests passing (`npm test`); `next build`,
 `tsc --noEmit`, and `next lint` all clean with **no secrets configured**.
 
 ## Built and working (no secrets needed)
@@ -15,6 +15,21 @@ Last updated: 2026-08-02. 70 unit tests passing (`npm test`); `next build`,
 - Firebase Admin SDK + client SDK wiring — lazy-initialized, so the app
   builds/runs with no `.env.local` at all; only throws (with a clear
   message) when a Firebase-touching function is actually called.
+- **Credential resolution without a service account key** (`resolveCredential`
+  in `lib/firebase/admin.ts`, unit tested). `FIREBASE_SERVICE_ACCOUNT_KEY` is
+  now optional and falls back to Application Default Credentials. This was
+  forced by the GCP org policy `constraints/iam.disableServiceAccountKeyCreation`
+  — default-on for organizations created since mid-2024 — which makes the
+  Firebase Console refuse to generate a key ("Key creation is not allowed on
+  this service account"). ADC is the better path anyway: deployed on Cloud
+  Functions/Cloud Run it resolves from the runtime service account with zero
+  config, and locally it comes from `gcloud auth application-default login`.
+  See `WEB_ADMIN.md` §10.2.
+- `projectId` and `storageBucket` are now passed to `initializeApp` from the
+  `NEXT_PUBLIC_FIREBASE_*` vars. Both are required on the ADC path — ADC
+  carries no project id (Firestore would fail with "Unable to detect a Project
+  Id"), and `getAdminStorage().bucket()` in `lib/actions/partner-locations.ts`
+  takes no bucket name, so it needs the default configured here.
 - Google Sign-In auth module (`lib/auth/`), domain-restriction logic
   (`assertAdminClaims`) fully unit tested.
 - `/admin` route protection + redirect chain — verified against a local
@@ -53,7 +68,9 @@ what to smoke-test first once secrets are in place.
    Actions are written and the validation in front of them is tested, but
    the actual Admin SDK calls are unexercised.
 5. Firebase Storage photo upload (`lib/actions/partner-locations.ts` →
-   `uploadPartnerImage`) — needs a real Storage bucket.
+   `uploadPartnerImage`) — needs a real Storage bucket. The missing
+   `storageBucket` app option that would have made this fail outright is now
+   fixed (see above), but the upload path itself is still unexercised.
 6. **Google Maps polygon editor** (`components/admin/polygon-map-editor.tsx`)
    — needs a live browser session with `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
    set. This was already rebuilt once after `tsc` caught that the
@@ -102,7 +119,11 @@ to 10.3.0 (much older, likely missing APIs this project uses).
 
 ## Next steps once secrets are added
 
-1. Fill in `.env.local` from `.env.example`.
+1. Fill in `.env.local` from `.env.example`. Leave
+   `FIREBASE_SERVICE_ACCOUNT_KEY` blank and run
+   `gcloud auth application-default login` instead (install the gcloud CLI
+   first: https://cloud.google.com/sdk/docs/install). Only
+   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` still has to be obtained by hand.
 2. Confirm the Firebase project is on the Blaze plan (`WEB_ADMIN.md` §10.1).
 3. `npm run dev`, sign in with a real `@thaishieldapp.com` account, and
    verify the domain check actually rejects a personal Google account

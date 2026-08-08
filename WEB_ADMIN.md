@@ -283,15 +283,29 @@ works as documented, just make sure the framework-aware setup below is used inst
 
 ### 10.2 Secrets & environment variables
 
-Never commit the service account key or API keys (already enforced by `.gitignore`). The
-SSR backend runs as a Cloud Function, so runtime secrets are injected the same way as the
-Flutter app's `syncTravelAlerts` function (`CLAUDE.md` §2b/§4):
+Never commit the service account key or API keys (already enforced by `.gitignore`).
+
+**Firebase credentials: nothing to set.** The SSR backend runs on Cloud Functions/Cloud Run
+*as* a service account, so `lib/firebase/admin.ts` picks up Application Default Credentials
+automatically — no `FIREBASE_SERVICE_ACCOUNT_KEY`, no secret to rotate, nothing to leak. Do
+**not** set it as a Functions secret; that only adds a long-lived credential where none is
+needed. Locally, get the same behaviour with:
 ```bash
-firebase functions:secrets:set FIREBASE_SERVICE_ACCOUNT_KEY
-firebase functions:secrets:set GOOGLE_MAPS_API_KEY
+gcloud auth application-default login
 ```
-Reference these as environment variables in the Next.js server code (`process.env.…`) —
-never `NEXT_PUBLIC_`-prefixed, since that would bundle them into client-side JS.
+This is also the only path that works when the GCP organization enforces
+`constraints/iam.disableServiceAccountKeyCreation` (on by default for organizations created
+since mid-2024) — under that policy the Firebase Console refuses to generate a key at all,
+failing with *"Key creation is not allowed on this service account."* The env var is still
+honoured if present, so an existing key keeps working, but new setups should skip it.
+
+**Google Maps key: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.** This one genuinely has to reach the
+browser — the Maps JavaScript API runs client-side, so there is no way to hide it and no
+value in trying. Secure it with an **HTTP-referrer restriction** in Google Cloud Console >
+Credentials (limit it to this admin's domains, and to the Maps JavaScript API only) rather
+than by concealment. Because `NEXT_PUBLIC_*` values are inlined at build time, it must be
+present in the environment during `next build`, not injected at runtime — a Functions
+secret would arrive too late to be bundled.
 
 ### 10.3 Deploy
 
