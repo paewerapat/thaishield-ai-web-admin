@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { MapPin, Pencil, Plus } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
 import { DeleteRowButton } from "@/components/admin/delete-row-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { TableEmptyState } from "@/components/admin/table-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -41,7 +43,10 @@ export default async function PartnerLocationsPage() {
         description={DESCRIPTION}
         action={
           <Button asChild>
-            <Link href="/admin/partner-locations/new">New partner</Link>
+            <Link href="/admin/partner-locations/new">
+              <Plus className="size-4" aria-hidden />
+              New partner
+            </Link>
           </Button>
         }
       />
@@ -60,14 +65,11 @@ export default async function PartnerLocationsPage() {
           </TableHeader>
           <TableBody>
             {items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-12 text-center text-muted-foreground"
-                >
-                  No partner locations yet. Create the first one to get started.
-                </TableCell>
-              </TableRow>
+              <TableEmptyState
+                colSpan={6}
+                icon={MapPin}
+                message="No partner locations yet. Create the first one to get started."
+              />
             ) : (
               items.map((item) => (
                 <TableRow key={item.id}>
@@ -92,6 +94,7 @@ export default async function PartnerLocationsPage() {
                     <div className="flex justify-end gap-1">
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/admin/partner-locations/${item.id}/edit`}>
+                          <Pencil className="size-3.5" aria-hidden />
                           Edit
                         </Link>
                       </Button>

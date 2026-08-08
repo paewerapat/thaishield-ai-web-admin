@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Pencil, Plus, Tags } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
 import { DeleteRowButton } from "@/components/admin/delete-row-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { TableEmptyState } from "@/components/admin/table-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -42,7 +44,10 @@ export default async function PriceStandardsPage() {
         description={DESCRIPTION}
         action={
           <Button asChild>
-            <Link href="/admin/price-standards/new">New price standard</Link>
+            <Link href="/admin/price-standards/new">
+              <Plus className="size-4" aria-hidden />
+              New price standard
+            </Link>
           </Button>
         }
       />
@@ -60,14 +65,11 @@ export default async function PriceStandardsPage() {
           </TableHeader>
           <TableBody>
             {items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="py-12 text-center text-muted-foreground"
-                >
-                  No price standards yet. Create the first one to get started.
-                </TableCell>
-              </TableRow>
+              <TableEmptyState
+                colSpan={5}
+                icon={Tags}
+                message="No price standards yet. Create the first one to get started."
+              />
             ) : (
               items.map((item) => (
                 <TableRow key={item.id}>
@@ -86,6 +88,7 @@ export default async function PriceStandardsPage() {
                     <div className="flex justify-end gap-1">
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/admin/price-standards/${item.id}/edit`}>
+                          <Pencil className="size-3.5" aria-hidden />
                           Edit
                         </Link>
                       </Button>

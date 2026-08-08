@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -232,11 +233,16 @@ export function PriceStandardForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={submitting}>
-          {submitting
-            ? "Saving…"
-            : mode === "create"
-              ? "Create"
-              : "Save changes"}
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Saving…
+            </>
+          ) : mode === "create" ? (
+            "Create"
+          ) : (
+            "Save changes"
+          )}
         </Button>
         <Button asChild variant="ghost" type="button">
           <Link href="/admin/price-standards">Cancel</Link>

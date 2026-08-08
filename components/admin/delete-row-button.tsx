@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ export function DeleteRowButton({
           size="sm"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
+          <Trash2 className="size-3.5" aria-hidden />
           Delete
         </Button>
       </AlertDialogTrigger>

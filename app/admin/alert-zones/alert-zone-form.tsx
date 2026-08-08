@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { FormField } from "@/components/admin/form-field";
 import { PolygonMapEditor } from "@/components/admin/polygon-map-editor";
 import { PolygonPointListEditor } from "@/components/admin/polygon-point-list-editor";
@@ -235,11 +236,16 @@ export function AlertZoneForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={submitting}>
-          {submitting
-            ? "Saving…"
-            : mode === "create"
-              ? "Create"
-              : "Save changes"}
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Saving…
+            </>
+          ) : mode === "create" ? (
+            "Create"
+          ) : (
+            "Save changes"
+          )}
         </Button>
         <Button asChild variant="ghost" type="button">
           <Link href="/admin/alert-zones">Cancel</Link>

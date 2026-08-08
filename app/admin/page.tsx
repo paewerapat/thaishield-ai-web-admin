@@ -1,26 +1,8 @@
 import Link from "next/link";
+import { ChevronRight, Info } from "lucide-react";
+import { CONTENT_MODULES } from "@/components/admin/module-meta";
 import { PageHeader } from "@/components/admin/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const MODULES = [
-  {
-    href: "/admin/price-standards",
-    title: "Price Standards",
-    description:
-      "Manage typical price ranges shown in the app's Scanner and Map.",
-  },
-  {
-    href: "/admin/partner-locations",
-    title: "Partner Locations",
-    description:
-      "Manage partner pins shown on the Smart Map, including photo uploads.",
-  },
-  {
-    href: "/admin/alert-zones",
-    title: "Alert Zones",
-    description: "Draw and edit travel-advisory area boundaries on the map.",
-  },
-];
 
 export default function AdminDashboardPage() {
   return (
@@ -31,31 +13,46 @@ export default function AdminDashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {MODULES.map((module) => (
-          <Link
-            key={module.href}
-            href={module.href}
-            className="rounded-lg outline-none ring-ring transition focus-visible:ring-2"
-          >
-            <Card className="h-full transition hover:border-brand/30 hover:shadow-md">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{module.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {module.description}
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+        {CONTENT_MODULES.map((module) => {
+          const Icon = module.icon;
+          return (
+            <Link
+              key={module.href}
+              href={module.href}
+              className="group rounded-lg outline-none ring-ring transition focus-visible:ring-2"
+            >
+              <Card className="h-full transition hover:border-brand/30 hover:shadow-md">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand/5 text-brand">
+                      <Icon className="size-[18px]" aria-hidden />
+                    </span>
+                    <CardTitle className="text-base">{module.label}</CardTitle>
+                    <ChevronRight
+                      className="ml-auto size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground"
+                      aria-hidden
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    {module.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
 
       {/* CLAUDE.md §7 — staff writing free text need the standard in front of
           them, not buried in a doc. */}
       <Card className="mt-6 border-warning/40 bg-warning/5">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Wording reminder</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Info className="size-4 text-amber-700" aria-hidden />
+            Wording reminder
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           <p>

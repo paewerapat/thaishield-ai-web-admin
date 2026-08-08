@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ImageOff, Loader2 } from "lucide-react";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -259,13 +260,18 @@ export function PartnerLocationForm({
           <CardTitle className="text-base">Photo</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {values.image_url && (
+          {values.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- admin-only preview of an arbitrary Storage URL
             <img
               src={values.image_url}
               alt=""
-              className="h-32 w-32 rounded-md border border-border object-cover"
+              className="size-32 rounded-md border border-border object-cover"
             />
+          ) : (
+            <div className="flex size-32 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border bg-muted/40">
+              <ImageOff className="size-6 text-muted-decorative" aria-hidden />
+              <span className="text-xs text-muted-foreground">No photo</span>
+            </div>
           )}
           <FormField
             label="Upload a new photo"
@@ -295,11 +301,16 @@ export function PartnerLocationForm({
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={submitting}>
-          {submitting
-            ? "Saving…"
-            : mode === "create"
-              ? "Create"
-              : "Save changes"}
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Saving…
+            </>
+          ) : mode === "create" ? (
+            "Create"
+          ) : (
+            "Save changes"
+          )}
         </Button>
         <Button asChild variant="ghost" type="button">
           <Link href="/admin/partner-locations">Cancel</Link>

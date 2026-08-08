@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Pencil, Plus, ShieldAlert } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
 import { DeleteRowButton } from "@/components/admin/delete-row-button";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { TableEmptyState } from "@/components/admin/table-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -42,7 +44,10 @@ export default async function AlertZonesPage() {
         description={DESCRIPTION}
         action={
           <Button asChild>
-            <Link href="/admin/alert-zones/new">New alert zone</Link>
+            <Link href="/admin/alert-zones/new">
+              <Plus className="size-4" aria-hidden />
+              New alert zone
+            </Link>
           </Button>
         }
       />
@@ -60,14 +65,11 @@ export default async function AlertZonesPage() {
           </TableHeader>
           <TableBody>
             {items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="py-12 text-center text-muted-foreground"
-                >
-                  No alert zones yet. Create the first one to get started.
-                </TableCell>
-              </TableRow>
+              <TableEmptyState
+                colSpan={5}
+                icon={ShieldAlert}
+                message="No alert zones yet. Create the first one to get started."
+              />
             ) : (
               items.map((item) => (
                 <TableRow key={item.id}>
@@ -85,6 +87,7 @@ export default async function AlertZonesPage() {
                     <div className="flex justify-end gap-1">
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/admin/alert-zones/${item.id}/edit`}>
+                          <Pencil className="size-3.5" aria-hidden />
                           Edit
                         </Link>
                       </Button>

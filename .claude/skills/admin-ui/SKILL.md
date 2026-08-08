@@ -64,6 +64,29 @@ text on light surfaces. The Flutter app regressed on exactly this once.
 second theme doubles the surface area for no user benefit here. Do not add
 `prefers-color-scheme` blocks or `dark:` variants.
 
+## Icons and assets
+
+**Icons: `lucide-react`** (installed with shadcn). Size them `size-4` inline with
+text, `size-3.5` inside `size="sm"` buttons. Always `aria-hidden` — every icon
+here sits beside its own label, so announcing it just doubles the text.
+
+`components/admin/module-meta.ts` is the single source of truth for the four
+modules (href, label, description, icon). The sidebar, the mobile nav and the
+dashboard cards all read from it — add a module there, not in three places.
+
+**Brand assets live in `public/images/`.** Next.js only serves static files from
+`public/`; `resources/` is both unserved *and* git-ignored, so anything left
+there is missing at deploy time. Originals may stay in `resources/`, but the
+copy the app loads must be under `public/`.
+
+- `logo.jpg` — the app icon. Render it through `<BrandMark>`
+  (`components/admin/brand-mark.tsx`), never a raw `<img>`: the source is a
+  1.5MB JPEG, and `next/image` re-encodes it to ~1.8KB WebP at sidebar size.
+  It is also a rounded square on black with no alpha, so it needs the rounded
+  clip `BrandMark` applies or it renders as a black box on the green chrome.
+- `skyline.png` — the Bangkok silhouette the Flutter app uses behind its bottom
+  nav. Decorative only: `aria-hidden`, `pointer-events-none`, ~7–8% opacity.
+
 ## Layout
 
 ```

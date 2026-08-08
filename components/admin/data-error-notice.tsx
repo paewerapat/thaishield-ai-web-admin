@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DataErrorNotice({ error }: { error: unknown }) {
@@ -7,7 +8,10 @@ export function DataErrorNotice({ error }: { error: unknown }) {
   return (
     <Card className="border-warning/50 bg-warning/5">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Could not load data</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <AlertTriangle className="size-[18px] text-amber-700" aria-hidden />
+          Could not load data
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         <p className="font-mono text-xs leading-relaxed text-foreground">
