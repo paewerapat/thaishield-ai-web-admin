@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
+import { PageHeader } from "@/components/admin/page-header";
 import { getPartnerLocation } from "@/lib/actions/partner-locations";
 import { PartnerLocationForm } from "../../partner-location-form";
+
+const TITLE = "Edit partner";
 
 export default async function EditPartnerLocationPage({
   params,
@@ -13,23 +16,19 @@ export default async function EditPartnerLocationPage({
     item = await getPartnerLocation(params.id);
   } catch (error) {
     return (
-      <div>
-        <h1 className="text-xl font-semibold">Edit Partner Location</h1>
-        <div className="mt-4">
-          <DataErrorNotice error={error} />
-        </div>
-      </div>
+      <>
+        <PageHeader title={TITLE} />
+        <DataErrorNotice error={error} />
+      </>
     );
   }
 
   if (!item) notFound();
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold">Edit Partner Location</h1>
-      <div className="mt-4">
-        <PartnerLocationForm mode="edit" initial={item} />
-      </div>
-    </div>
+    <>
+      <PageHeader title={TITLE} description={item.name} />
+      <PartnerLocationForm mode="edit" initial={item} />
+    </>
   );
 }

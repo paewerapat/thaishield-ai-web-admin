@@ -120,8 +120,11 @@ export function PolygonMapEditor({
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
-      <div className="rounded-md border border-dashed border-neutral-300 p-4 text-sm text-neutral-500">
-        Google Maps isn&apos;t configured yet (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      <div className="rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+        Google Maps isn&apos;t configured yet (
+        <code className="rounded bg-muted px-1 py-0.5 text-xs">
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        </code>{" "}
         is unset) — use the point list below to enter the boundary manually.
         Once the key is set, this becomes an interactive map: click to add a
         point, drag to move one, right-click to remove one.
@@ -131,7 +134,10 @@ export function PolygonMapEditor({
 
   if (loadError) {
     return (
-      <p className="text-sm text-red-600">
+      <p
+        role="alert"
+        className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      >
         Failed to load Google Maps: {loadError}
       </p>
     );
@@ -141,10 +147,12 @@ export function PolygonMapEditor({
     <div>
       <div
         ref={mapDivRef}
-        className="h-96 w-full rounded-md border border-neutral-300"
+        className="h-96 w-full overflow-hidden rounded-md border border-border bg-muted"
       />
-      {!ready && <p className="mt-2 text-xs text-neutral-400">Loading map…</p>}
-      <p className="mt-1 text-xs text-neutral-400">
+      {!ready && (
+        <p className="mt-2 text-xs text-muted-foreground">Loading map…</p>
+      )}
+      <p className="mt-1 text-xs text-muted-foreground">
         Click the map to add a boundary point, drag a point to move it,
         right-click a point to remove it.
       </p>

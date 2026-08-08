@@ -1,9 +1,26 @@
 import Link from "next/link";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
+import { DeleteRowButton } from "@/components/admin/delete-row-button";
+import { PageHeader } from "@/components/admin/page-header";
+import { StatusBadge } from "@/components/admin/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   deletePriceStandardFormAction,
   listPriceStandards,
 } from "@/lib/actions/price-standards";
+
+const TITLE = "Price Standards";
+const DESCRIPTION =
+  "Typical price ranges the app's Scanner and Map compare against.";
 
 export default async function PriceStandardsPage() {
   let items;
@@ -11,73 +28,80 @@ export default async function PriceStandardsPage() {
     items = await listPriceStandards();
   } catch (error) {
     return (
-      <div>
-        <h1 className="text-xl font-semibold">Price Standards</h1>
-        <div className="mt-4">
-          <DataErrorNotice error={error} />
-        </div>
-      </div>
+      <>
+        <PageHeader title={TITLE} description={DESCRIPTION} />
+        <DataErrorNotice error={error} />
+      </>
     );
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Price Standards</h1>
-        <Link
-          href="/admin/price-standards/new"
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
-        >
-          New
-        </Link>
-      </div>
+    <>
+      <PageHeader
+        title={TITLE}
+        description={DESCRIPTION}
+        action={
+          <Button asChild>
+            <Link href="/admin/price-standards/new">New price standard</Link>
+          </Button>
+        }
+      />
 
-      <table className="mt-4 w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-neutral-200 text-left text-neutral-500">
-            <th className="py-2 pr-4">ID</th>
-            <th className="py-2 pr-4">Name (EN)</th>
-            <th className="py-2 pr-4">Category</th>
-            <th className="py-2 pr-4">Range (THB)</th>
-            <th className="py-2 pr-4" />
-          </tr>
-        </thead>
-        <tbody>
-          {items.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-6 text-center text-neutral-400">
-                No price standards yet.
-              </td>
-            </tr>
-          )}
-          {items.map((item) => (
-            <tr key={item.id} className="border-b border-neutral-100">
-              <td className="py-2 pr-4 font-mono text-xs">{item.id}</td>
-              <td className="py-2 pr-4">{item.name_en}</td>
-              <td className="py-2 pr-4">{item.category}</td>
-              <td className="py-2 pr-4">
-                {item.min_price}–{item.max_price}
-              </td>
-              <td className="py-2 pr-4 text-right">
-                <div className="flex justify-end gap-3">
-                  <Link
-                    href={`/admin/price-standards/${item.id}/edit`}
-                    className="text-neutral-600 hover:underline"
-                  >
-                    Edit
-                  </Link>
-                  <form action={deletePriceStandardFormAction}>
-                    <input type="hidden" name="id" value={item.id} />
-                    <button type="submit" className="text-red-600 hover:underline">
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Name (EN)</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-right">Range (THB)</TableHead>
+              <TableHead className="w-[1%]" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-12 text-center text-muted-foreground"
+                >
+                  No price standards yet. Create the first one to get started.
+                </TableCell>
+              </TableRow>
+            ) : (
+              items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {item.id}
+                  </TableCell>
+                  <TableCell className="font-medium">{item.name_en}</TableCell>
+                  <TableCell>
+                    <StatusBadge value={item.category} tone="neutral" />
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {item.min_price.toLocaleString()}–
+                    {item.max_price.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1">
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/admin/price-standards/${item.id}/edit`}>
+                          Edit
+                        </Link>
+                      </Button>
+                      <DeleteRowButton
+                        id={item.id}
+                        label={item.name_en}
+                        action={deletePriceStandardFormAction}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+    </>
   );
 }

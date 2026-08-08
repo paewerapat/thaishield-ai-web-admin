@@ -1,12 +1,14 @@
+import { PageHeader } from "@/components/admin/page-header";
 import { PartnerLocationForm } from "../partner-location-form";
 
 export default function NewPartnerLocationPage() {
   return (
-    <div>
-      <h1 className="text-xl font-semibold">New Partner Location</h1>
-      <div className="mt-4">
-        <PartnerLocationForm mode="create" />
-      </div>
-    </div>
+    <>
+      <PageHeader
+        title="New partner"
+        description="Add a partner pin to the app's Smart Map."
+      />
+      <PartnerLocationForm mode="create" />
+    </>
   );
 }

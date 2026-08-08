@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/admin/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MODULES = [
   {
@@ -22,17 +24,49 @@ const MODULES = [
 
 export default function AdminDashboardPage() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {MODULES.map((module) => (
-        <Link
-          key={module.href}
-          href={module.href}
-          className="rounded-lg border border-neutral-200 bg-white p-5 transition hover:border-neutral-400"
-        >
-          <h2 className="font-semibold">{module.title}</h2>
-          <p className="mt-1 text-sm text-neutral-500">{module.description}</p>
-        </Link>
-      ))}
-    </div>
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Manage the Firestore content the ThaiShield AI app reads."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {MODULES.map((module) => (
+          <Link
+            key={module.href}
+            href={module.href}
+            className="rounded-lg outline-none ring-ring transition focus-visible:ring-2"
+          >
+            <Card className="h-full transition hover:border-brand/30 hover:shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">{module.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  {module.description}
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* CLAUDE.md §7 — staff writing free text need the standard in front of
+          them, not buried in a doc. */}
+      <Card className="mt-6 border-warning/40 bg-warning/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Wording reminder</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          <p>
+            Copy entered here reaches tourists. Keep it neutral and statistical —
+            &ldquo;Above Typical Range&rdquo;, &ldquo;Travel Advisory
+            Area&rdquo;. Never &ldquo;Scam&rdquo;, &ldquo;Fraud&rdquo;,
+            &ldquo;Dangerous&rdquo; or &ldquo;Overcharge&rdquo;, and never name a
+            specific shop.
+          </p>
+        </CardContent>
+      </Card>
+    </>
   );
 }

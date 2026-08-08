@@ -1,14 +1,27 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 export function DataErrorNotice({ error }: { error: unknown }) {
-  const message = error instanceof Error ? error.message : "Something went wrong.";
+  const message =
+    error instanceof Error ? error.message : "Something went wrong.";
+
   return (
-    <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-      <p className="font-medium">Could not load data.</p>
-      <p className="mt-1">{message}</p>
-      <p className="mt-1 text-amber-700">
-        If this mentions a missing environment variable, see{" "}
-        <code>.env.example</code> and <code>STATUS.md</code> — Firebase
-        secrets haven&apos;t been configured yet.
-      </p>
-    </div>
+    <Card className="border-warning/50 bg-warning/5">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Could not load data</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        <p className="font-mono text-xs leading-relaxed text-foreground">
+          {message}
+        </p>
+        <p className="text-muted-foreground">
+          If this mentions credentials, run{" "}
+          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+            gcloud auth application-default login
+          </code>{" "}
+          and restart the dev server. See <code>STATUS.md</code> for the current
+          setup state.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

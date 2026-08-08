@@ -1,7 +1,20 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FormField } from "@/components/admin/form-field";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { savePartnerLocation } from "@/lib/actions/partner-locations";
 import {
   PARTNER_LOCATION_PRICE_TIERS,
@@ -53,7 +66,10 @@ export function PartnerLocationForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function updateField<K extends keyof FieldValues>(name: K, value: FieldValues[K]) {
+  function updateField<K extends keyof FieldValues>(
+    name: K,
+    value: FieldValues[K],
+  ) {
     setValues((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -99,138 +115,196 @@ export function PartnerLocationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">ID (e.g. blue_lotus_hotel)</span>
-        <input
-          value={values.id}
-          onChange={(e) => updateField("id", e.target.value)}
-          disabled={mode === "edit"}
-          className="rounded-md border border-neutral-300 px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-400"
-        />
-        {fieldErrors.id && <span className="text-xs text-red-600">{fieldErrors.id}</span>}
-      </label>
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Partner</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            label="ID"
+            htmlFor="id"
+            hint={
+              mode === "edit"
+                ? "The document ID cannot be changed after creation."
+                : "Lowercase with underscores, e.g. blue_lotus_hotel."
+            }
+            error={fieldErrors.id}
+          >
+            <Input
+              id="id"
+              value={values.id}
+              onChange={(e) => updateField("id", e.target.value)}
+              disabled={mode === "edit"}
+              placeholder="blue_lotus_hotel"
+            />
+          </FormField>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Name</span>
-        <input
-          value={values.name}
-          onChange={(e) => updateField("name", e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
-        {fieldErrors.name && <span className="text-xs text-red-600">{fieldErrors.name}</span>}
-      </label>
+          <FormField label="Name" htmlFor="name" error={fieldErrors.name}>
+            <Input
+              id="name"
+              value={values.name}
+              onChange={(e) => updateField("name", e.target.value)}
+            />
+          </FormField>
 
-      <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Latitude</span>
-          <input
-            type="number"
-            step="any"
-            value={values.lat}
-            onChange={(e) => updateField("lat", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
-          />
-          {fieldErrors.lat && <span className="text-xs text-red-600">{fieldErrors.lat}</span>}
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">Longitude</span>
-          <input
-            type="number"
-            step="any"
-            value={values.lng}
-            onChange={(e) => updateField("lng", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
-          />
-          {fieldErrors.lng && <span className="text-xs text-red-600">{fieldErrors.lng}</span>}
-        </label>
+          <FormField label="Type" htmlFor="type" error={fieldErrors.type}>
+            <Select
+              value={values.type}
+              onValueChange={(v) => updateField("type", v)}
+            >
+              <SelectTrigger id="type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PARTNER_LOCATION_TYPES.map((t) => (
+                  <SelectItem key={t} value={t} className="capitalize">
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField
+            label="Price tier"
+            htmlFor="price_tier"
+            error={fieldErrors.price_tier}
+          >
+            <Select
+              value={values.price_tier}
+              onValueChange={(v) => updateField("price_tier", v)}
+            >
+              <SelectTrigger id="price_tier">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PARTNER_LOCATION_PRICE_TIERS.map((t) => (
+                  <SelectItem key={t} value={t} className="capitalize">
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+
+          <FormField
+            label="Rating"
+            htmlFor="rating"
+            hint="0.0 to 5.0"
+            error={fieldErrors.rating}
+          >
+            <Input
+              id="rating"
+              type="number"
+              step="0.1"
+              min="0"
+              max="5"
+              value={values.rating}
+              onChange={(e) => updateField("rating", e.target.value)}
+            />
+          </FormField>
+
+          <div className="flex items-end pb-2">
+            <div className="flex items-center gap-2">
+              <input
+                id="is_verified"
+                type="checkbox"
+                checked={values.is_verified}
+                onChange={(e) => updateField("is_verified", e.target.checked)}
+                className="h-4 w-4 rounded border-input accent-brand"
+              />
+              {/* Matches the schema field (`is_verified`), the list column and
+                  the Flutter app's "Verified Badge" — §7 restricts the phrase
+                  "Verified Fair Price", not this. */}
+              <Label htmlFor="is_verified" className="cursor-pointer">
+                Verified partner
+              </Label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Location</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <FormField label="Latitude" htmlFor="lat" error={fieldErrors.lat}>
+            <Input
+              id="lat"
+              type="number"
+              step="any"
+              value={values.lat}
+              onChange={(e) => updateField("lat", e.target.value)}
+              placeholder="13.7563"
+            />
+          </FormField>
+
+          <FormField label="Longitude" htmlFor="lng" error={fieldErrors.lng}>
+            <Input
+              id="lng"
+              type="number"
+              step="any"
+              value={values.lng}
+              onChange={(e) => updateField("lng", e.target.value)}
+              placeholder="100.5018"
+            />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Photo</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {values.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element -- admin-only preview of an arbitrary Storage URL
+            <img
+              src={values.image_url}
+              alt=""
+              className="h-32 w-32 rounded-md border border-border object-cover"
+            />
+          )}
+          <FormField
+            label="Upload a new photo"
+            htmlFor="image"
+            hint="JPEG, PNG or WebP, up to 5MB. Leave empty to keep the current photo."
+            error={fieldErrors.image_url}
+          >
+            <Input
+              id="image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+              className="cursor-pointer file:mr-3 file:cursor-pointer file:rounded file:border-0 file:bg-secondary file:px-3 file:py-1 file:text-xs file:font-medium"
+            />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      {formError && (
+        <p
+          role="alert"
+          className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {formError}
+        </p>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={submitting}>
+          {submitting
+            ? "Saving…"
+            : mode === "create"
+              ? "Create"
+              : "Save changes"}
+        </Button>
+        <Button asChild variant="ghost" type="button">
+          <Link href="/admin/partner-locations">Cancel</Link>
+        </Button>
       </div>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Type</span>
-        <select
-          value={values.type}
-          onChange={(e) => updateField("type", e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        >
-          {PARTNER_LOCATION_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Rating (0.0–5.0)</span>
-        <input
-          type="number"
-          step="0.1"
-          min="0"
-          max="5"
-          value={values.rating}
-          onChange={(e) => updateField("rating", e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        />
-        {fieldErrors.rating && (
-          <span className="text-xs text-red-600">{fieldErrors.rating}</span>
-        )}
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Price tier</span>
-        <select
-          value={values.price_tier}
-          onChange={(e) => updateField("price_tier", e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2"
-        >
-          {PARTNER_LOCATION_PRICE_TIERS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={values.is_verified}
-          onChange={(e) => updateField("is_verified", e.target.checked)}
-        />
-        <span className="font-medium text-neutral-700">Verified partner</span>
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-neutral-700">Photo</span>
-        {values.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element -- admin-only preview of an arbitrary Storage URL
-          <img
-            src={values.image_url}
-            alt=""
-            className="h-32 w-32 rounded-md object-cover"
-          />
-        )}
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-          className="text-sm"
-        />
-        <span className="text-xs text-neutral-400">
-          JPEG, PNG, or WebP, up to 5MB. Leave empty to keep the current photo.
-        </span>
-      </label>
-
-      {formError && <p className="text-sm text-red-600">{formError}</p>}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {submitting ? "Saving…" : mode === "create" ? "Create" : "Save changes"}
-      </button>
     </form>
   );
 }

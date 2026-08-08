@@ -1,12 +1,14 @@
+import { PageHeader } from "@/components/admin/page-header";
 import { PriceStandardForm } from "../price-standard-form";
 
 export default function NewPriceStandardPage() {
   return (
-    <div>
-      <h1 className="text-xl font-semibold">New Price Standard</h1>
-      <div className="mt-4">
-        <PriceStandardForm mode="create" />
-      </div>
-    </div>
+    <>
+      <PageHeader
+        title="New price standard"
+        description="Add a typical price range for the app to compare scans against."
+      />
+      <PriceStandardForm mode="create" />
+    </>
   );
 }

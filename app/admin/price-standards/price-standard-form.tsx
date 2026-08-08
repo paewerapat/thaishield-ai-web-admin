@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FormField } from "@/components/admin/form-field";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   createPriceStandard,
   updatePriceStandard,
@@ -43,18 +55,15 @@ function toFieldValues(input?: PriceStandardInput): FieldValues {
   };
 }
 
-const LABELS: Record<keyof FieldValues, string> = {
-  id: "ID (e.g. pad_thai)",
-  name_en: "Name (English)",
-  name_th: "Name (Thai)",
-  name_zh: "Name (Chinese)",
-  name_ko: "Name (Korean)",
-  name_ru: "Name (Russian)",
-  name_ja: "Name (Japanese)",
-  min_price: "Minimum price (THB)",
-  max_price: "Maximum price (THB)",
-  category: "Category",
-};
+/** The six localized names, rendered as a grid rather than six stacked rows. */
+const NAME_FIELDS = [
+  { name: "name_en", label: "English" },
+  { name: "name_th", label: "Thai" },
+  { name: "name_zh", label: "Chinese" },
+  { name: "name_ko", label: "Korean" },
+  { name: "name_ru", label: "Russian" },
+  { name: "name_ja", label: "Japanese" },
+] as const;
 
 export function PriceStandardForm({
   mode,
@@ -106,46 +115,133 @@ export function PriceStandardForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4">
-      {(Object.keys(LABELS) as (keyof FieldValues)[]).map((name) => (
-        <label key={name} className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-neutral-700">{LABELS[name]}</span>
-          {name === "category" ? (
-            <select
-              value={values.category}
-              onChange={(e) => updateField("category", e.target.value)}
-              className="rounded-md border border-neutral-300 px-3 py-2"
-            >
-              {PRICE_STANDARD_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              value={values[name]}
-              onChange={(e) => updateField(name, e.target.value)}
-              disabled={name === "id" && mode === "edit"}
-              type={name.endsWith("price") ? "number" : "text"}
-              className="rounded-md border border-neutral-300 px-3 py-2 disabled:bg-neutral-100 disabled:text-neutral-400"
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Item</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            label="ID"
+            htmlFor="id"
+            hint={
+              mode === "edit"
+                ? "The document ID cannot be changed after creation."
+                : "Lowercase with underscores, e.g. pad_thai."
+            }
+            error={fieldErrors.id}
+          >
+            <Input
+              id="id"
+              value={values.id}
+              onChange={(e) => updateField("id", e.target.value)}
+              disabled={mode === "edit"}
+              placeholder="pad_thai"
             />
-          )}
-          {fieldErrors[name] && (
-            <span className="text-xs text-red-600">{fieldErrors[name]}</span>
-          )}
-        </label>
-      ))}
+          </FormField>
 
-      {formError && <p className="text-sm text-red-600">{formError}</p>}
+          <FormField
+            label="Category"
+            htmlFor="category"
+            error={fieldErrors.category}
+          >
+            <Select
+              value={values.category}
+              onValueChange={(v) => updateField("category", v)}
+            >
+              <SelectTrigger id="category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRICE_STANDARD_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c} className="capitalize">
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+        </CardContent>
+      </Card>
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-fit rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {submitting ? "Saving…" : mode === "create" ? "Create" : "Save changes"}
-      </button>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Names</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          {NAME_FIELDS.map((field) => (
+            <FormField
+              key={field.name}
+              label={field.label}
+              htmlFor={field.name}
+              error={fieldErrors[field.name]}
+            >
+              <Input
+                id={field.name}
+                value={values[field.name]}
+                onChange={(e) => updateField(field.name, e.target.value)}
+              />
+            </FormField>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Typical price range (THB)</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            label="Minimum"
+            htmlFor="min_price"
+            error={fieldErrors.min_price}
+          >
+            <Input
+              id="min_price"
+              type="number"
+              inputMode="numeric"
+              value={values.min_price}
+              onChange={(e) => updateField("min_price", e.target.value)}
+            />
+          </FormField>
+
+          <FormField
+            label="Maximum"
+            htmlFor="max_price"
+            error={fieldErrors.max_price}
+          >
+            <Input
+              id="max_price"
+              type="number"
+              inputMode="numeric"
+              value={values.max_price}
+              onChange={(e) => updateField("max_price", e.target.value)}
+            />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      {formError && (
+        <p
+          role="alert"
+          className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {formError}
+        </p>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={submitting}>
+          {submitting
+            ? "Saving…"
+            : mode === "create"
+              ? "Create"
+              : "Save changes"}
+        </Button>
+        <Button asChild variant="ghost" type="button">
+          <Link href="/admin/price-standards">Cancel</Link>
+        </Button>
+      </div>
     </form>
   );
 }

@@ -1,12 +1,14 @@
+import { PageHeader } from "@/components/admin/page-header";
 import { AlertZoneForm } from "../alert-zone-form";
 
 export default function NewAlertZonePage() {
   return (
-    <div>
-      <h1 className="text-xl font-semibold">New Alert Zone</h1>
-      <div className="mt-4">
-        <AlertZoneForm mode="create" />
-      </div>
-    </div>
+    <>
+      <PageHeader
+        title="New alert zone"
+        description="Draw a travel-advisory area boundary for the app's Smart Map."
+      />
+      <AlertZoneForm mode="create" />
+    </>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { LatLng } from "@/lib/geo/polygon";
 
 /**
@@ -32,46 +34,55 @@ export function PolygonPointListEditor({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="space-y-2">
+      {value.length > 0 && (
+        <div className="flex items-center gap-2 pl-7 text-xs font-medium text-muted-foreground">
+          <span className="w-32">Latitude</span>
+          <span className="w-32">Longitude</span>
+        </div>
+      )}
+
       {value.map((point, index) => (
         <div key={index} className="flex items-center gap-2">
-          <span className="w-5 text-xs text-neutral-400">{index + 1}</span>
-          <input
+          <span className="w-5 text-right text-xs tabular-nums text-muted-foreground">
+            {index + 1}
+          </span>
+          <Input
             type="number"
             step="any"
             value={point.lat}
             onChange={(e) => updatePoint(index, "lat", e.target.value)}
-            placeholder="Latitude"
-            className="w-32 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+            aria-label={`Point ${index + 1} latitude`}
+            className="h-8 w-32 text-sm"
           />
-          <input
+          <Input
             type="number"
             step="any"
             value={point.lng}
             onChange={(e) => updatePoint(index, "lng", e.target.value)}
-            placeholder="Longitude"
-            className="w-32 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+            aria-label={`Point ${index + 1} longitude`}
+            className="h-8 w-32 text-sm"
           />
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => removePoint(index)}
-            className="text-xs text-red-600 hover:underline"
+            className="h-8 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             Remove
-          </button>
+          </Button>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={addPoint}
-        className="w-fit rounded-md border border-neutral-300 px-3 py-1 text-xs hover:bg-neutral-50"
-      >
-        + Add point
-      </button>
-      <p className="text-xs text-neutral-400">
-        A polygon needs at least 3 points, listed in order around the
-        boundary.
-      </p>
+
+      <div className="flex items-center gap-3 pt-1">
+        <Button type="button" variant="outline" size="sm" onClick={addPoint}>
+          Add point
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          At least 3 points, in order around the boundary.
+        </p>
+      </div>
     </div>
   );
 }

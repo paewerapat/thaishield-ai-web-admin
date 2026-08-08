@@ -2,22 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+/*
+ * ThaiShield admin theme — see .claude/skills/admin-ui/SKILL.md.
+ *
+ * Values are bare HSL triplets, NOT full color functions, because
+ * tailwind.config.ts wraps every one of them as `hsl(var(--token))`. The
+ * shadcn CLI seeds this file with `oklch(...)` values from its registry, which
+ * produces `hsl(oklch(...))` — invalid CSS that silently drops every colour.
+ * If colours ever vanish after re-running the CLI, that is the cause.
+ *
+ * Palette source: CLAUDE.md §8. Light mode only — the chrome is already dark
+ * and a second theme buys nothing for an internal tool.
+ */
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Brand chrome — #0A1810 dark green. Sidebar/header backgrounds only. */
+    --brand: 146 41% 7%;
+    --brand-foreground: 210 20% 96%;
+
+    /* #FFB300 gold — active nav, wordmark, focus ring. */
+    --gold: 42 100% 50%;
+
+    /* Surfaces: #F3F5F7 canvas behind white cards. */
+    --background: 210 20% 96%;
+    --foreground: 211 53% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 211 53% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 211 53% 11%;
+
+    /* Primary actions carry the brand green. */
+    --primary: 146 41% 7%;
+    --primary-foreground: 210 20% 96%;
+
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 211 53% 11%;
+    --muted: 210 20% 93%;
+    /*
+     * CLAUDE.md §8 lists #90A4AE (200 16% 62%) for secondary text, but that is
+     * ~2.5:1 on white and fails WCAG AA. Darkened to ~4.6:1 for text; the
+     * original stays available as `text-muted-decorative` for non-text use.
+     */
+    --muted-foreground: 200 16% 40%;
+    --muted-decorative: 200 16% 62%;
+
+    --accent: 210 20% 93%;
+    --accent-foreground: 211 53% 11%;
+
+    /* Status colours, CLAUDE.md §8. */
+    --success: 123 46% 34%;
+    --success-foreground: 0 0% 100%;
+    --warning: 42 100% 50%;
+    --warning-foreground: 211 53% 11%;
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --info: 199 91% 64%;
+    --info-foreground: 211 53% 11%;
+
+    --border: 210 16% 88%;
+    --input: 210 16% 85%;
+    --ring: 42 100% 50%;
+
+    --radius: 0.5rem;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /*
+     * Was hardcoded to Arial by create-next-app, which overrode the Geist
+     * fonts app/layout.tsx goes to the trouble of loading. Use the variable.
+     */
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  }
 }
 
 @layer utilities {

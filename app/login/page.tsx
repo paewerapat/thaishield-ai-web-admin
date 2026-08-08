@@ -9,6 +9,8 @@ import {
 } from "@/lib/firebase/client";
 import { signInWithGoogleIdToken } from "@/lib/auth/actions";
 import { ADMIN_ALLOWED_DOMAIN } from "@/lib/auth/config";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,20 +42,49 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-24 text-center">
-      <h1 className="text-2xl font-semibold">ThaiShield AI — Web Admin</h1>
-      <p className="text-sm text-neutral-500">
-        Sign in with your @{ADMIN_ALLOWED_DOMAIN} Google account.
-      </p>
-      <button
-        type="button"
-        onClick={handleSignIn}
-        disabled={loading}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {loading ? "Signing in…" : "Sign in with Google"}
-      </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <main className="flex min-h-screen items-center justify-center bg-brand p-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 text-center">
+          <h1 className="text-xl font-semibold tracking-wide text-gold">
+            ThaiShield AI
+          </h1>
+          <p className="mt-1 text-sm text-brand-foreground/60">Web Admin</p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">
+              Sign in with your{" "}
+              <span className="font-medium text-foreground">
+                @{ADMIN_ALLOWED_DOMAIN}
+              </span>{" "}
+              Google account.
+            </p>
+
+            <Button
+              type="button"
+              onClick={handleSignIn}
+              disabled={loading}
+              className="mt-5 w-full"
+            >
+              {loading ? "Signing in…" : "Sign in with Google"}
+            </Button>
+
+            {error && (
+              <p
+                role="alert"
+                className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                {error}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="mt-6 text-center text-xs text-brand-foreground/40">
+          Internal tool. Access is restricted to ThaiShield staff.
+        </p>
+      </div>
     </main>
   );
 }
