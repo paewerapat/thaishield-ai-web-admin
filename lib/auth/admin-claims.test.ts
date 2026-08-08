@@ -1,65 +1,139 @@
 import { describe, expect, it } from "vitest";
-import { AdminAuthError, assertAdminClaims } from "./admin-claims";
+import {
+  AdminAuthError,
+  assertAdminClaims,
+  type AdminTokenClaims,
+} from "./admin-claims";
 
 const DOMAIN = "thaishieldapp.com";
 
+/**
+ * The claim set Firebase actually issues for a Google Workspace sign-in,
+ * captured from a real `verifyIdToken` result (identifiers redacted). Note
+ * what is NOT here: `hd`. Firebase does not forward Google's hosted-domain
+ * claim, which is what STATUS.md item #1 was unsure about.
+ */
+const REAL_WORKSPACE_TOKEN: AdminTokenClaims = {
+  email: "dev@thaishieldapp.com",
+  email_verified: true,
+  firebase: { sign_in_provider: "google.com" },
+};
+
 describe("assertAdminClaims", () => {
-  it("does not throw for a verified email on the allowed domain", () => {
+  it("accepts the claim set Firebase really issues for a Workspace sign-in", () => {
+    // Regression guard: the original hd-only check rejected this exact token,
+    // locking every legitimate admin out.
+    expect(() => assertAdminClaims(REAL_WORKSPACE_TOKEN, DOMAIN)).not.toThrow();
+  });
+
+  it("accepts a token that does carry a matching hd", () => {
+    expect(() =>
+      assertAdminClaims({ ...REAL_WORKSPACE_TOKEN, hd: DOMAIN }, DOMAIN),
+    ).not.toThrow();
+  });
+
+  it("rejects a present-but-mismatched hd even when the email domain matches", () => {
+    expect(() =>
+      assertAdminClaims({ ...REAL_WORKSPACE_TOKEN, hd: "someoneelse.com" }, DOMAIN),
+    ).toThrow(/Access restricted to @thaishieldapp\.com/);
+  });
+
+  it("treats the domain half of the address case-insensitively", () => {
     expect(() =>
       assertAdminClaims(
-        { email: "staff@thaishieldapp.com", email_verified: true, hd: DOMAIN },
+        { ...REAL_WORKSPACE_TOKEN, email: "Dev@ThaiShieldApp.COM" },
         DOMAIN,
       ),
     ).not.toThrow();
   });
 
-  it("throws AdminAuthError when the hd claim is missing", () => {
-    expect(() =>
-      assertAdminClaims(
-        { email: "someone@thaishieldapp.com", email_verified: true },
-        DOMAIN,
-      ),
-    ).toThrow(AdminAuthError);
+  describe("rejects", () => {
+    it("an unverified email", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email_verified: false },
+          DOMAIN,
+        ),
+      ).toThrow(/not verified/);
+    });
+
+    it("a token with no email_verified claim at all", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email_verified: undefined },
+          DOMAIN,
+        ),
+      ).toThrow(AdminAuthError);
+    });
+
+    it("a non-Google sign-in provider", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, firebase: { sign_in_provider: "password" } },
+          DOMAIN,
+        ),
+      ).toThrow(/must use a Google account/);
+    });
+
+    it("a token with no provider information", () => {
+      expect(() =>
+        assertAdminClaims({ ...REAL_WORKSPACE_TOKEN, firebase: {} }, DOMAIN),
+      ).toThrow(/must use a Google account/);
+    });
+
+    it("a lookalike domain that merely ends with the allowed one", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email: "attacker@notthaishieldapp.com" },
+          DOMAIN,
+        ),
+      ).toThrow(AdminAuthError);
+    });
+
+    it("a subdomain of the allowed domain", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email: "attacker@mail.thaishieldapp.com" },
+          DOMAIN,
+        ),
+      ).toThrow(AdminAuthError);
+    });
+
+    it("an unrelated domain", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email: "someone@gmail.com" },
+          DOMAIN,
+        ),
+      ).toThrow(AdminAuthError);
+    });
+
+    it("a token carrying no email", () => {
+      expect(() =>
+        assertAdminClaims(
+          { ...REAL_WORKSPACE_TOKEN, email: undefined },
+          DOMAIN,
+        ),
+      ).toThrow(AdminAuthError);
+    });
   });
 
-  it("throws when hd is a different domain", () => {
+  it("DOCUMENTS A KNOWN GAP: a consumer Google account on the domain is accepted", () => {
+    // The previous hd-based check would have caught this; the email-suffix
+    // check cannot, because a consumer account and a Workspace account produce
+    // identical claims once `hd` is absent. Kept as an explicit, failing-loudly
+    // -if-changed record of the tradeoff rather than deleted, since it is the
+    // one real security regression from dropping hd. Closing it requires
+    // gating on an Admin-SDK custom claim instead — see admin-claims.ts.
     expect(() =>
       assertAdminClaims(
         {
-          email: "someone@thaishieldapp.com",
+          email: "conflicting-account@thaishieldapp.com",
           email_verified: true,
-          hd: "gmail.com",
+          firebase: { sign_in_provider: "google.com" },
         },
         DOMAIN,
       ),
-    ).toThrow(/Access restricted to @thaishieldapp\.com/);
-  });
-
-  it("throws when email_verified is false, even with a matching hd", () => {
-    expect(() =>
-      assertAdminClaims(
-        { email: "staff@thaishieldapp.com", email_verified: false, hd: DOMAIN },
-        DOMAIN,
-      ),
-    ).toThrow(/not verified/);
-  });
-
-  it("throws when email_verified is undefined", () => {
-    expect(() => assertAdminClaims({ hd: DOMAIN }, DOMAIN)).toThrow(
-      AdminAuthError,
-    );
-  });
-
-  it("rejects a consumer Google account merely using a matching email, since hd is absent", () => {
-    // This is the exact scenario WEB_ADMIN.md §4 flags: someone who can
-    // receive mail at the domain creates a personal (non-Workspace)
-    // Google account with that address. It passes email_verified but
-    // never carries a matching `hd`.
-    expect(() =>
-      assertAdminClaims(
-        { email: "attacker@thaishieldapp.com", email_verified: true },
-        DOMAIN,
-      ),
-    ).toThrow(AdminAuthError);
+    ).not.toThrow();
   });
 });

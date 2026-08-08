@@ -5,7 +5,7 @@ testing, per the plan in `WEB_ADMIN.md`. Update this file whenever an item
 below moves from unverified to verified (or a new gap is found) — don't let
 it go stale.
 
-Last updated: 2026-08-08. 76 unit tests passing (`npm test`); `next build`,
+Last updated: 2026-08-08. 83 unit tests passing (`npm test`); `next build`,
 `tsc --noEmit`, and `next lint` all clean with **no secrets configured**.
 
 ## Built and working (no secrets needed)
@@ -49,20 +49,22 @@ These are implemented per spec but can only be exercised once Firebase
 project credentials exist. None of this blocks continued development; it's
 what to smoke-test first once secrets are in place.
 
-1. **Whether Firebase's decoded ID token actually carries Google's `hd`
-   claim.** The whole domain-restriction design (`WEB_ADMIN.md` §4) hinges
-   on this. Flagged in detail in `lib/auth/admin-claims.ts`'s doc comment,
-   with a documented fallback (check `email_verified` + `firebase.sign_in_provider
-   === "google.com"` + email domain string) if `hd` turns out to be absent.
-   **First thing to test** once a real `@thaishieldapp.com` Google
-   Workspace sign-in is possible.
-2. **Whether `thaishieldapp.com` is actually a Google Workspace domain.**
-   If it isn't, no `@thaishieldapp.com` Google account will have an `hd`
-   claim at all (or exist via Google Sign-In in the expected way) —
-   confirm this before assuming #1's design works as intended.
-3. Session cookie create/read/clear (`lib/auth/session.ts`) — needs a real
-   sign-in to exercise `verifyIdToken`/`createSessionCookie`/
-   `verifySessionCookie`.
+1. ~~Whether Firebase's decoded ID token carries Google's `hd` claim.~~
+   **RESOLVED 2026-08-08 — it does not.** Dumped a real decoded token from a
+   `@thaishieldapp.com` Workspace sign-in: `hd` is absent entirely. Firebase
+   forwards only its own claims (`firebase.identities`,
+   `firebase.sign_in_provider`) plus the standard OIDC ones; provider-specific
+   claims do not survive the exchange. `assertAdminClaims` now uses the
+   documented fallback. See the residual-risk note below.
+2. ~~Whether `thaishieldapp.com` is actually a Google Workspace domain.~~
+   **RESOLVED 2026-08-08 — it is.** `MX → smtp.google.com` and
+   `TXT → v=spf1 include:_spf.google.com ~all`. So #1's failure was Firebase's
+   behaviour, not a non-Workspace domain.
+3. Session cookie create/read/clear (`lib/auth/session.ts`) — **partially
+   verified**: a real sign-in exercised `verifyIdToken` successfully (which
+   also proves the ADC credential path works end to end against live Firebase).
+   `createSessionCookie`/`verifySessionCookie` are still unexercised — the old
+   `hd` check threw before reaching them.
 4. Full Firestore CRUD against a live `price_standards` / `partner_locations`
    / `alert_zones` collection (list/create/update/delete) — the Server
    Actions are written and the validation in front of them is tested, but
@@ -83,6 +85,24 @@ what to smoke-test first once secrets are in place.
    right now regardless.
 7. Deployment to Firebase Hosting (`WEB_ADMIN.md` §10) — steps are
    documented but nothing has been deployed yet.
+
+## Known security debt
+
+**Admin access is gated on an email suffix, not on Workspace membership.**
+Consequence of item #1 above: with `hd` unavailable there is no claim that
+distinguishes a real `@thaishieldapp.com` Workspace account from a consumer
+Google account bearing the same address. Google blocks consumer signup on a
+domain an active Workspace tenant has claimed, so the practical exposure is
+narrow — chiefly "conflicting accounts" created before the domain joined
+Workspace. Anyone in that position who signs in gets full admin.
+
+Proper fix, worth doing before this handles anything sensitive: mint a custom
+claim (e.g. `admin: true`) with the Admin SDK for each named staff member and
+gate on **that** instead of the email domain. It is a small change to
+`assertAdminClaims` plus a one-off provisioning script, and it makes admin
+access an explicit allowlist rather than an inference from an address. The
+Workspace admin can also resolve existing conflicting accounts from the
+Google Admin console as a stopgap.
 
 ## Known dependency vulnerabilities (tracked, not silently ignored)
 
