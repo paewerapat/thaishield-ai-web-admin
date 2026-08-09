@@ -20,10 +20,11 @@ const DEFAULT_CENTER: LatLng = { lat: 13.7563, lng: 100.5018 }; // Bangkok
  * third-party dependency, since Polygon itself is unaffected by the
  * removal.
  *
- * UNVERIFIED — see STATUS.md: not yet exercised against a real Google
- * Maps API key/live browser session (none is configured yet). Needs a
- * hands-on smoke test once NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is set, before
- * relying on it for real data entry.
+ * The first live browser session against a real API key turned up three
+ * faults, all fixed below and all invisible to `tsc`/lint/build: an empty
+ * polygon crashing on `getPath()`, the advertised right-click-to-remove
+ * never having been wired up, and the map being built twice under React
+ * Strict Mode.
  *
  * One-directional sync only: editing the point list below this map
  * (PolygonPointListEditor) does NOT redraw the polygon shown here — this
@@ -50,6 +51,7 @@ export function PolygonMapEditor({
   useEffect(() => {
     if (!GOOGLE_MAPS_API_KEY || !mapDivRef.current) return;
     let cancelled = false;
+    let teardown: (() => void) | undefined;
 
     function pointsFromPath(
       path: google.maps.MVCArray<google.maps.LatLng>,
@@ -82,7 +84,14 @@ export function PolygonMapEditor({
         const map = new Map(mapDivRef.current, { center, zoom: 14 });
 
         const polygon = new Polygon({
-          paths: initialPoints,
+          // Wrapped in an outer array so the polygon always owns exactly one
+          // path, even an empty one. Passing the bare point list means a new
+          // zone — which starts with no points — builds a polygon with *zero*
+          // paths, and getPath() then returns undefined. The typings declare
+          // it as always returning MVCArray<LatLng>, so nothing catches this
+          // until addListener dereferences the undefined and throws "Cannot
+          // read properties of undefined (reading '__e3_')".
+          paths: [initialPoints],
           editable: true,
           draggable: true,
           map,
@@ -102,6 +111,27 @@ export function PolygonMapEditor({
           if (e.latLng) path.push(e.latLng);
         });
 
+        // The helper text under this map has always promised right-click to
+        // remove a vertex, but nothing implemented it. `vertex` is undefined
+        // when the right-click lands on an edge or fill rather than a point.
+        event.addListener(
+          polygon,
+          "rightclick",
+          (e: google.maps.PolyMouseEvent) => {
+            if (e.vertex !== undefined) path.removeAt(e.vertex);
+          },
+        );
+
+        // React Strict Mode runs this effect twice in development. Without a
+        // teardown the second run stacks another map and another polygon on
+        // the same div, and every edit then fires `sync` twice.
+        teardown = () => {
+          event.clearInstanceListeners(path);
+          event.clearInstanceListeners(polygon);
+          event.clearInstanceListeners(map);
+          polygon.setMap(null);
+        };
+
         setReady(true);
       } catch (err) {
         if (!cancelled) {
@@ -115,6 +145,7 @@ export function PolygonMapEditor({
     load();
     return () => {
       cancelled = true;
+      teardown?.();
     };
   }, []);
 

@@ -87,15 +87,26 @@ what to smoke-test first once secrets are in place.
      (pick `asia-southeast1`, matching those buckets), then
      `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` checked against the name it creates.
 6. **Google Maps polygon editor** (`components/admin/polygon-map-editor.tsx`)
-   — needs a live browser session with `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-   set. This was already rebuilt once after `tsc` caught that the
-   originally-written code used `DrawingManager`, which Google removed
-   from the Maps JS API around June 2026 (v3.65+) — the current
-   implementation (click-to-add-vertex on a plain editable `Polygon`)
-   compiles against the installed `@types/google.maps` but has not been
-   exercised in a real browser. The manual point-list editor next to it
-   has no such dependency and is what makes the alert_zones flow usable
-   right now regardless.
+   — first live browser session done, three faults found and fixed, but the
+   editor still needs a **hands-on pass to confirm it now works**: draw a
+   zone, drag a vertex, drag the shape, right-click a vertex, and check the
+   point list below stays in step.
+   - Adding a vertex to a **new** zone threw *"Cannot read properties of
+     undefined (reading `__e3_`)"*. `new Polygon({ paths: pointList })` with
+     an empty list yields a polygon with zero paths, so `getPath()` returns
+     `undefined` — while `@types/google.maps` declares it as always returning
+     `MVCArray<LatLng>`, which is why nothing caught it. Fixed by passing
+     `paths: [pointList]`.
+   - **Right-click to remove a vertex was never implemented**, though the
+     helper text under the map has always advertised it.
+   - React Strict Mode ran the init effect twice, stacking a second map and
+     polygon on the same div and firing every `sync` twice. The effect now
+     tears down its listeners and detaches the polygon.
+
+   Earlier history: rebuilt once after `tsc` caught the original use of
+   `DrawingManager`, which Google removed from the Maps JS API around June
+   2026 (v3.65+). The manual point-list editor beside it has no Maps
+   dependency and keeps the alert_zones flow usable regardless.
 7. Deployment to Firebase Hosting (`WEB_ADMIN.md` §10) — steps are
    documented but nothing has been deployed yet.
 
