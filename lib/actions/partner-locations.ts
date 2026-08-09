@@ -4,6 +4,10 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getAdminFirestore, getAdminStorage } from "@/lib/firebase/admin";
 import {
+  bucketMissingMessage,
+  isBucketMissingError,
+} from "@/lib/storage-errors";
+import {
   assertValidImageFile,
   extensionForImageType,
   partnerLocationInputSchema,
@@ -46,8 +50,19 @@ async function uploadPartnerImage(id: string, file: File): Promise<string> {
 
   const bucket = getAdminStorage().bucket();
   const storageFile = bucket.file(storagePath);
-  await storageFile.save(buffer, { contentType: file.type });
-  await storageFile.makePublic();
+
+  try {
+    await storageFile.save(buffer, { contentType: file.type });
+    await storageFile.makePublic();
+  } catch (cause) {
+    // Raw GCS returns `{"error":{"code":404,"message":"The specified bucket
+    // does not exist."}}` — which names neither the bucket nor the fix, and
+    // lands in front of non-technical staff as a JSON blob.
+    if (isBucketMissingError(cause)) {
+      throw new Error(bucketMissingMessage(bucket.name), { cause });
+    }
+    throw cause;
+  }
 
   return `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
 }
