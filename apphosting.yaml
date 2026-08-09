@@ -1,0 +1,68 @@
+# Firebase App Hosting — see WEB_ADMIN.md §10.
+#
+# NOTE ON `availability`: Next.js inlines every NEXT_PUBLIC_* value into the
+# browser bundle at build time, so each one needs BUILD. RUNTIME alone produces
+# a build with those values baked in as undefined, which fails exactly the way
+# lib/firebase/client.ts documents — "Missing required environment variable" in
+# the browser, with a correct-looking config everywhere else.
+#
+# NOTE ON CREDENTIALS: FIREBASE_SERVICE_ACCOUNT_KEY is deliberately absent. The
+# backend runs on Cloud Run as a service account, so lib/firebase/admin.ts picks
+# up Application Default Credentials with nothing configured. Adding a key here
+# would introduce a long-lived secret that buys nothing — and this org's policy
+# blocks creating one anyway (STATUS.md).
+
+runConfig:
+  # An internal CMS for a handful of staff. Scaling to zero means a cold start
+  # on the first request after idle, which is the right trade here; raise
+  # minInstances to 1 if that becomes annoying.
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Firebase client config. Public by design in Firebase's security model —
+  # access is controlled by Firestore/Storage rules and the server-side domain
+  # check, not by hiding these. They are already committed in .env.example.
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyA6C2ykoLYI4m41BHb-bfy6usISmHNLo1w
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: thaishield-ai-790eb.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: thaishield-ai-790eb
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: thaishield-ai-790eb.firebasestorage.app
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "479467305669"
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:479467305669:web:3de8b9bbdf5dd28470ceac"
+    availability: [BUILD, RUNTIME]
+
+  - variable: NEXT_PUBLIC_ADMIN_ALLOWED_DOMAIN
+    value: thaishieldapp.com
+    availability: [BUILD, RUNTIME]
+
+  # Held in Secret Manager rather than inline. Not because it stays hidden — it
+  # is a NEXT_PUBLIC_ value and ends up in the browser bundle regardless — but
+  # because this file is committed to GitHub, and a billable key in a repo gets
+  # picked up by scrapers and is a nuisance to rotate. Its real protection is
+  # the HTTP-referrer restriction in Google Cloud Console.
+  #
+  # Create it once with:
+  #   firebase apphosting:secrets:set googleMapsApiKey
+  #   firebase apphosting:secrets:grantaccess googleMapsApiKey --backend <backend-id>
+  - variable: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    secret: googleMapsApiKey
+    availability: [BUILD, RUNTIME]

@@ -236,50 +236,41 @@ accent) is **not** a requirement for this internal tool, but reusing it is a rea
 default for brand consistency unless/until the user specifies a different admin-specific
 design — confirm before investing significant UI polish effort either way.
 
-## 10. Deployment (Firebase Hosting)
+## 10. Deployment (Firebase App Hosting)
 
-`Requirement.html` line 1.5 and this doc's §1 both commit to **Firebase Hosting** as the
-deploy target — that's correct, but note **plain static Firebase Hosting is not enough on
-its own**: §4's Server Actions (Firestore writes via the Admin SDK, ID-token verification)
-require a server runtime, not a static export. Deploy via **Firebase Hosting's Next.js web
-framework support**, which packages the SSR/Server Action backend as a Cloud Function/Cloud
-Run service behind Hosting's CDN automatically — `firebase deploy --only hosting` still
-works as documented, just make sure the framework-aware setup below is used instead of
-`next export`.
+§4's Server Actions need a server runtime, so a static export is not an option. This
+deploys to **Firebase App Hosting**, which builds from a GitHub branch and runs the
+Next.js server on Cloud Run behind a CDN.
+
+> **Superseded:** earlier revisions of this section specified Firebase Hosting's
+> `webframeworks` support. That is the legacy path — the experiment ships **disabled**
+> in Firebase CLI 15.x (`firebase experiments:list`), while App Hosting is GA and has
+> first-class `apphosting:*` commands. App Hosting also fits this project better: it
+> rebuilds on push, and its `apphosting.yaml` distinguishes build-time from run-time
+> environment variables, which `NEXT_PUBLIC_*` requires (§10.2).
 
 ### 10.1 One-time project setup
 
-1. **Confirm the target Firebase project is on the Blaze (pay-as-you-go) plan.** Same
-   requirement as the Flutter app's Cloud Functions (`CLAUDE.md` §2b/§4) — the SSR backend
-   runs as a Cloud Function/Cloud Run service under the hood, which cannot deploy on the
-   free Spark plan. Check at
-   `https://console.firebase.google.com/project/<project-id>/usage`.
-2. **Decide which Firebase project this admin lives in.** It almost certainly must be the
-   **same project** as the Flutter app (`thaishield-ai-790eb` per `CLAUDE.md`), since it
-   writes to the exact Firestore instance the app reads from — don't create a separate
-   project for this admin.
+1. **Confirm the Firebase project is on the Blaze (pay-as-you-go) plan.** The backend is
+   a Cloud Run service and cannot deploy on Spark. Check at
+   `https://console.firebase.google.com/project/thaishield-ai-790eb/usage`.
+2. **Use the same project as the Flutter app** (`thaishield-ai-790eb`) — this admin writes
+   to the exact Firestore instance the app reads. Do not create a separate project.
 3. Install/update the Firebase CLI and log in (once per machine):
    ```bash
    npm install -g firebase-tools
    firebase login
    ```
-4. **(Recommended) create a dedicated Hosting site** for the admin rather than reusing the
-   project's default Hosting site, so it gets its own URL/subdomain and doesn't collide with
-   anything else deployed to the same project later:
+4. **Push the repo to GitHub.** App Hosting builds from a branch, not from the local
+   working tree, so anything uncommitted or unpushed is simply not in the deploy.
+5. Create the backend and connect the repo:
    ```bash
-   firebase hosting:sites:create thaishield-admin
+   firebase apphosting:backends:create --project thaishield-ai-790eb
    ```
-5. From the Next.js project root, run:
-   ```bash
-   firebase init hosting
-   ```
-   - Select the existing project (`thaishield-ai-790eb`).
-   - When asked *"What do you want to use as your public directory?"* / *"Do you want to
-     use a web framework?"* — **answer yes to the web framework prompt**; the CLI
-     auto-detects Next.js and configures `firebase.json` + `apphosting`/`.firebase/` output
-     config to build and serve it with SSR support. Do not manually set the public
-     directory to a static `next export` folder.
-   - If prompted for the Hosting site, pick the `thaishield-admin` site created in step 4.
+   - Region: **`asia-southeast1`**, matching the `syncTravelAlerts` function and the
+     Storage bucket, so Firestore/Storage calls stay in-region.
+   - Connect the GitHub repo and pick the branch to deploy from (`main`).
+   - Note the backend ID it prints — §10.2 needs it to grant secret access.
 
 ### 10.2 Secrets & environment variables
 
@@ -299,40 +290,53 @@ since mid-2024) — under that policy the Firebase Console refuses to generate a
 failing with *"Key creation is not allowed on this service account."* The env var is still
 honoured if present, so an existing key keeps working, but new setups should skip it.
 
-**Google Maps key: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.** This one genuinely has to reach the
-browser — the Maps JavaScript API runs client-side, so there is no way to hide it and no
-value in trying. Secure it with an **HTTP-referrer restriction** in Google Cloud Console >
-Credentials (limit it to this admin's domains, and to the Maps JavaScript API only) rather
-than by concealment. Because `NEXT_PUBLIC_*` values are inlined at build time, it must be
-present in the environment during `next build`, not injected at runtime — a Functions
-secret would arrive too late to be bundled.
+**Everything else lives in `apphosting.yaml`,** which is committed. Each entry declares
+`availability: [BUILD, RUNTIME]`, because Next.js inlines `NEXT_PUBLIC_*` into the browser
+bundle during `next build` — a value supplied only at runtime arrives too late and ships a
+bundle with `undefined` baked in.
+
+**Google Maps key: `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.** It has to reach the browser (the
+Maps JavaScript API is client-side), so it cannot be hidden; its real protection is an
+**HTTP-referrer restriction** in Google Cloud Console > Credentials, scoped to this admin's
+domains and to the Maps JavaScript API only. It is still held in Secret Manager rather than
+written inline, because `apphosting.yaml` is committed and a billable key in a public repo
+attracts scrapers and is tedious to rotate:
+```bash
+firebase apphosting:secrets:set googleMapsApiKey
+firebase apphosting:secrets:grantaccess googleMapsApiKey --backend <backend-id>
+```
 
 ### 10.3 Deploy
 
 ```bash
-# from the Next.js project root
-npm run build      # sanity-check the build locally first
-firebase deploy --only hosting
+npm run build      # sanity-check locally first
+git push origin main
 ```
-This builds the app and deploys both the static assets and the SSR backend function in one
-step. Firebase prints the live Hosting URL (e.g. `https://thaishield-admin.web.app`) when
-it finishes.
+Pushing to the connected branch triggers a rollout automatically. To deploy without a new
+commit:
+```bash
+firebase apphosting:rollouts:create <backend-id>
+```
+Watch progress in the Console under **Build → App Hosting**; it prints the live URL
+(e.g. `https://<backend-id>--thaishield-ai-790eb.asia-southeast1.hosted.app`).
 
-### 10.4 Verify after every deploy
+### 10.4 After the first deploy — three things that will otherwise break it
 
-- Sign in with a `@thaishieldapp.com` Google account on the **live** URL and confirm the
-  `hd`-claim check (§4) actually rejects a non-domain account — test this in an incognito
-  window with a personal Google account.
-- Exercise all three CRUD screens once against the live site, then confirm the Flutter app
-  still reads the changes correctly (per §8 step 5's QA pass).
-- Check the Firebase Console **Functions** tab for the new SSR backend function's logs if
-  anything 500s — Server Action errors surface there, not in `firebase deploy` output.
+1. **Firebase Auth → Settings → Authorized domains**: add the App Hosting domain, or
+   Google Sign-In fails with `auth/unauthorized-domain`.
+2. **Maps API key referrer restriction**: add the same domain, or the polygon editor shows
+   *"This page can't load Google Maps correctly"*.
+3. **The backend's service account needs Firestore and Storage access.** It runs as
+   `firebase-app-hosting-compute@thaishield-ai-790eb.iam.gserviceaccount.com`; without
+   those roles every Server Action fails with `PERMISSION_DENIED`. Grant them in Cloud
+   Console > IAM.
 
-### 10.5 Optional: CI/CD via GitHub Actions
+### 10.5 Verify after every deploy
 
-Once the GitHub repo is pushed, `firebase init hosting:github` can wire up automatic
-**preview channel deploys on every PR** and **production deploy on merge to `main`** using
-the `FirebaseExtended/action-hosting-deploy` GitHub Action — worth setting up once the repo
-exists on GitHub, so line-item 1.5's "deploy to production" isn't a manual step going
-forward. Not required for the first deploy; can be added later without changing anything
-above.
+- Sign in with a `@thaishieldapp.com` account on the **live** URL, then confirm in an
+  incognito window that a personal Google account is rejected (§4).
+- Exercise all three CRUD screens against the live site, including a partner **photo
+  upload** (the one path never yet confirmed end to end — STATUS.md item 5), then check the
+  Flutter app still reads the changes.
+- If anything 500s, the logs are in Cloud Run's log viewer for the backend service —
+  Server Action errors surface there, not in the rollout output.
