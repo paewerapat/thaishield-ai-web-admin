@@ -70,9 +70,22 @@ what to smoke-test first once secrets are in place.
    Actions are written and the validation in front of them is tested, but
    the actual Admin SDK calls are unexercised.
 5. Firebase Storage photo upload (`lib/actions/partner-locations.ts` →
-   `uploadPartnerImage`) — needs a real Storage bucket. The missing
-   `storageBucket` app option that would have made this fail outright is now
-   fixed (see above), but the upload path itself is still unexercised.
+   `uploadPartnerImage`). Two real bugs have been burned down against a live
+   project since; the happy path itself is **still unconfirmed** — no upload
+   has yet been observed to succeed end to end.
+   - The missing `storageBucket` app option is fixed (see above).
+   - `makePublic()` is gone. It threw *"Cannot update access control for an
+     object when uniform bucket-level access is enabled"* — UBLA is on by
+     default for buckets Firebase creates now and disables per-object ACLs.
+     Granting `allUsers` read on the bucket instead is also unavailable: this
+     org's secure-by-default baseline enforces
+     `storage.publicAccessPrevention`. Uploads now carry a Firebase download
+     token, which needs neither.
+   - **The project had no Storage bucket at all** — `gcloud storage buckets
+     list` returned only the two `gcf-v2-*` buckets Cloud Functions created for
+     `syncTravelAlerts`. Storage has to be enabled once in the Firebase Console
+     (pick `asia-southeast1`, matching those buckets), then
+     `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` checked against the name it creates.
 6. **Google Maps polygon editor** (`components/admin/polygon-map-editor.tsx`)
    — needs a live browser session with `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
    set. This was already rebuilt once after `tsc` caught that the

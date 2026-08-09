@@ -2,6 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { getDownloadURL } from "firebase-admin/storage";
 import { getAdminFirestore, getAdminStorage } from "@/lib/firebase/admin";
 import {
   bucketMissingMessage,
@@ -39,7 +40,23 @@ export async function getPartnerLocation(
 /**
  * Uploads a real partner photo to Firebase Storage (WEB_ADMIN.md §2/§3 —
  * replaces the Flutter app's current hotlinked Pexels placeholders) and
- * returns its public download URL to store as `image_url`.
+ * returns a download URL to store as `image_url`.
+ *
+ * Readability comes from a Firebase **download token**, not from an ACL. The
+ * obvious `makePublic()` throws "Cannot update access control for an object
+ * when uniform bucket-level access is enabled" — UBLA is on by default for
+ * buckets Firebase creates now, and it disables per-object ACLs outright.
+ *
+ * Granting `allUsers` read at the bucket level is not the way out either: this
+ * organization is on Google's secure-by-default baseline (the same bundle that
+ * blocks service account key creation — see STATUS.md), which enforces
+ * `storage.publicAccessPrevention`.
+ *
+ * A download token sidesteps both. The resulting URL is unguessable but needs
+ * no authentication and bypasses Storage rules, which is exactly right here:
+ * the Flutter app has no auth and must render these photos for anonymous
+ * tourists. Tokens do not expire; revoke one from the Firebase Console if a
+ * photo ever has to be pulled.
  */
 async function uploadPartnerImage(id: string, file: File): Promise<string> {
   assertValidImageFile(file);
@@ -47,13 +64,19 @@ async function uploadPartnerImage(id: string, file: File): Promise<string> {
   const extension = extensionForImageType(file.type);
   const storagePath = `partner_locations/${id}/${randomUUID()}.${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const downloadToken = randomUUID();
 
   const bucket = getAdminStorage().bucket();
   const storageFile = bucket.file(storagePath);
 
   try {
-    await storageFile.save(buffer, { contentType: file.type });
-    await storageFile.makePublic();
+    await storageFile.save(buffer, {
+      contentType: file.type,
+      metadata: {
+        contentType: file.type,
+        metadata: { firebaseStorageDownloadTokens: downloadToken },
+      },
+    });
   } catch (cause) {
     // Raw GCS returns `{"error":{"code":404,"message":"The specified bucket
     // does not exist."}}` — which names neither the bucket nor the fix, and
@@ -64,7 +87,11 @@ async function uploadPartnerImage(id: string, file: File): Promise<string> {
     throw cause;
   }
 
-  return `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+  // Reads the token back from the stored object rather than formatting the URL
+  // from `downloadToken` locally. If the metadata failed to persist under that
+  // exact key, this throws here — where staff see it — instead of returning a
+  // well-formed URL that 403s the first time a tourist opens the map.
+  return getDownloadURL(storageFile);
 }
 
 function extractFields(formData: FormData) {
