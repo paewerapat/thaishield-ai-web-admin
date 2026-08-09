@@ -86,6 +86,34 @@ what to smoke-test first once secrets are in place.
 7. Deployment to Firebase Hosting (`WEB_ADMIN.md` §10) — steps are
    documented but nothing has been deployed yet.
 
+## Local dev gotcha: ADC expires roughly daily
+
+Symptom — Server Actions start failing with:
+
+> Credential implementation provided to initializeApp() … failed to fetch a
+> valid Google OAuth2 access token … `"error_subtype":"invalid_rapt"`
+
+**Ignore both causes that error suggests.** It blames clock skew or a revoked
+service account key file; neither applies, because this project authenticates
+with user ADC (`type: authorized_user`) and has no key file at all — see the
+org-policy note above.
+
+`rapt` is Google's ReAuth Proof Token. The `thaishieldapp.com` Workspace enforces
+a Google Cloud session length (16 hours by default), after which the stored
+refresh token can no longer mint access tokens. Fix:
+
+```bash
+gcloud auth application-default login
+```
+
+then **restart the dev server** — `lib/firebase/admin.ts` caches the initialized
+app at module scope and `applicationDefault()` caches the credential internally,
+so a running process keeps using the dead one.
+
+This does not affect deployments: Cloud Run runs as a service account, which no
+reauth policy applies to. A Workspace admin can extend the session under
+Security → Google Cloud session control, at the cost of weakening it org-wide.
+
 ## Known security debt
 
 **Admin access is gated on an email suffix, not on Workspace membership.**
