@@ -49,4 +49,12 @@ export type PriceStandardInput = z.infer<typeof priceStandardInputSchema>;
 
 export interface PriceStandard extends PriceStandardInput {
   updated_at: unknown; // Firestore Timestamp, set server-side only
+  /**
+   * Reference photo shown behind the Flutter Scanner's result card. Not part
+   * of `priceStandardInputSchema` — staff cannot set or clear it from the CMS
+   * yet (WEB_ADMIN.md §3 still lists an image preview as unbuilt). It exists
+   * here so the update path can carry the seeded value forward instead of
+   * dropping it, and may be absent on documents that never had one.
+   */
+  image_url?: string;
 }

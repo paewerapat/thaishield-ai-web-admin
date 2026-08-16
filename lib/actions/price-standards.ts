@@ -1,6 +1,6 @@
 "use server";
 
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { revalidatePath } from "next/cache";
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import {
@@ -13,13 +13,31 @@ import { requireAdminSession } from "./require-admin";
 const COLLECTION = "price_standards";
 const LIST_PATH = "/admin/price-standards";
 
+/**
+ * Rebuilds a document with `id` taken from the document ID instead of the
+ * stored field. All 61 production documents were written by the pre-CMS seed
+ * script and carry no `id` field at all, which used to leave `initial.id`
+ * undefined on the edit form and made those rows unsaveable. The document ID
+ * *is* the id by contract (CLAUDE.md §3), so read it from there and stop
+ * depending on the data being well-formed. Mirrors alert-zones.
+ */
+function fromFirestore(
+  id: string,
+  data: FirebaseFirestore.DocumentData,
+): PriceStandard {
+  return { ...data, id } as PriceStandard;
+}
+
 export async function listPriceStandards(): Promise<PriceStandard[]> {
   await requireAdminSession();
+  // Ordering by the `id` FIELD silently dropped every document that lacks it —
+  // i.e. all 61 live ones — so staff saw an empty table over populated data.
+  // The document ID is always present and equals `id`, so order by that.
   const snapshot = await getAdminFirestore()
     .collection(COLLECTION)
-    .orderBy("id")
+    .orderBy(FieldPath.documentId())
     .get();
-  return snapshot.docs.map((doc) => doc.data() as PriceStandard);
+  return snapshot.docs.map((doc) => fromFirestore(doc.id, doc.data()));
 }
 
 export async function getPriceStandard(
@@ -27,7 +45,7 @@ export async function getPriceStandard(
 ): Promise<PriceStandard | null> {
   await requireAdminSession();
   const doc = await getAdminFirestore().collection(COLLECTION).doc(id).get();
-  return doc.exists ? (doc.data() as PriceStandard) : null;
+  return doc.exists ? fromFirestore(doc.id, doc.data()!) : null;
 }
 
 export async function createPriceStandard(
@@ -65,10 +83,25 @@ export async function updatePriceStandard(
       return { ok: false, error: "Price standard ID cannot be changed." };
     }
 
-    await getAdminFirestore()
-      .collection(COLLECTION)
-      .doc(id)
-      .set({ ...parsed, updated_at: FieldValue.serverTimestamp() });
+    const ref = getAdminFirestore().collection(COLLECTION).doc(id);
+
+    // `.set()` REPLACES the document. `image_url` is not part of this form's
+    // schema but every seeded dish has one, and the Flutter Scanner uses it as
+    // the result card's background photo (scanner_screen.dart `_ResultHeader`).
+    // Without this carry-over, a staff member editing a price silently deletes
+    // that photo for every tourist. Read it back and keep it.
+    const existing = await ref.get();
+    const previousImageUrl = existing.exists
+      ? (existing.data() as { image_url?: unknown }).image_url
+      : undefined;
+
+    await ref.set({
+      ...parsed,
+      ...(typeof previousImageUrl === "string"
+        ? { image_url: previousImageUrl }
+        : {}),
+      updated_at: FieldValue.serverTimestamp(),
+    });
     revalidatePath(LIST_PATH);
     return { ok: true };
   } catch (error) {

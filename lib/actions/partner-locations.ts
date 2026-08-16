@@ -20,13 +20,28 @@ import { requireAdminSession } from "./require-admin";
 const COLLECTION = "partner_locations";
 const LIST_PATH = "/admin/partner-locations";
 
+/**
+ * Rebuilds a document with `id` taken from the document ID instead of the
+ * stored field. 5 of the 6 production documents were written by the pre-CMS
+ * seed script and carry no `id`, which left the (disabled) ID input empty on
+ * the edit form and made Zod reject the save with "ID is required" — those
+ * rows could not be edited at all. The document ID is the id by contract
+ * (CLAUDE.md §3). Mirrors alert-zones.
+ */
+function fromFirestore(
+  id: string,
+  data: FirebaseFirestore.DocumentData,
+): PartnerLocation {
+  return { ...data, id } as PartnerLocation;
+}
+
 export async function listPartnerLocations(): Promise<PartnerLocation[]> {
   await requireAdminSession();
   const snapshot = await getAdminFirestore()
     .collection(COLLECTION)
     .orderBy("name")
     .get();
-  return snapshot.docs.map((doc) => doc.data() as PartnerLocation);
+  return snapshot.docs.map((doc) => fromFirestore(doc.id, doc.data()));
 }
 
 export async function getPartnerLocation(
@@ -34,7 +49,7 @@ export async function getPartnerLocation(
 ): Promise<PartnerLocation | null> {
   await requireAdminSession();
   const doc = await getAdminFirestore().collection(COLLECTION).doc(id).get();
-  return doc.exists ? (doc.data() as PartnerLocation) : null;
+  return doc.exists ? fromFirestore(doc.id, doc.data()!) : null;
 }
 
 /**

@@ -5,8 +5,17 @@ testing, per the plan in `WEB_ADMIN.md`. Update this file whenever an item
 below moves from unverified to verified (or a new gap is found) — don't let
 it go stale.
 
-Last updated: 2026-08-08. 83 unit tests passing (`npm test`); `next build`,
+Last updated: 2026-08-16. 119 unit tests passing (`npm test`); `next build`,
 `tsc --noEmit`, and `next lint` all clean with **no secrets configured**.
+
+**The full test procedure now lives in `INTEGRATION_TEST.md` at the workspace
+root** (`C:\Fastwork\thaishield-ai\`, the folder holding both repos) — it covers
+both repos (this admin writes the documents that app reads), so it is kept in
+one place rather than duplicated. Run it after every feature
+change. F1–F4 (found 2026-08-14) are fixed as of 2026-08-16 and now have
+regression tests in `lib/actions/crud-flow.test.ts` — the two `KNOWN ISSUE:`
+tests were flipped. Two follow-ups need a human: re-save the five alert zones
+through the CMS (F2 live data), and deploy `syncTravelAlerts` (F7).
 
 ## Built and working (no secrets needed)
 
@@ -40,6 +49,16 @@ Last updated: 2026-08-08. 83 unit tests passing (`npm test`); `next build`,
   tested, including the legal-wording linter wired into `alert_zones`
   descriptions.
 - `lib/geo/polygon.ts` centroid/bounding-radius math — fully unit tested.
+- **`partner_locations.type` expanded 3 → 11 categories** (2026-08-11),
+  landed together with the Flutter app's Phase 2A task 2.3. The values are
+  `restaurant, hotel, transport, hospital, pharmacy, police, tourist_police,
+  atm_bank, shopping, attraction, tourist_info` — mirrored from
+  `PartnerCategory` in `lib/core/models/partner_category.dart` in the Flutter
+  repo, and unit tested here. The three original values are unchanged, so no
+  data migration was needed. The type `<select>` now renders
+  `PARTNER_LOCATION_TYPE_LABELS` instead of the raw slugs. **Change the two
+  lists together** — a value staff can enter but the app cannot render (or
+  vice versa) is the failure mode this pairing exists to prevent.
 - All pages/routes render and the full route tree builds successfully
   with no environment variables set.
 
@@ -66,13 +85,42 @@ what to smoke-test first once secrets are in place.
    `createSessionCookie`/`verifySessionCookie` are still unexercised — the old
    `hd` check threw before reaching them.
 4. Full Firestore CRUD against a live `price_standards` / `partner_locations`
-   / `alert_zones` collection (list/create/update/delete) — the Server
-   Actions are written and the validation in front of them is tested, but
-   the actual Admin SDK calls are unexercised.
-5. Firebase Storage photo upload (`lib/actions/partner-locations.ts` →
-   `uploadPartnerImage`). Two real bugs have been burned down against a live
-   project since; the happy path itself is **still unconfirmed** — no upload
-   has yet been observed to succeed end to end.
+   / `alert_zones` collection (list/create/update/delete). **Partially
+   resolved 2026-08-14.** The Server Actions now run end to end against an
+   in-memory Firestore in `lib/actions/crud-flow.test.ts` (21 tests: document
+   shape, GeoPoint conversion, derived centre/radius, upload URL form, wording
+   gate, all 11 `type` values), and a live `partner_locations` create is
+   confirmed in production (`bp_samila_beach_hotel`, written 2026-08-09).
+   Still unexercised live: `price_standards` and `alert_zones` writes, and the
+   whole flow through the real UI. That pass turned up four defects — all four
+   **fixed 2026-08-16**, see `../INTEGRATION_TEST.md` §F at the workspace root:
+   - **F1 (critical)** `listPriceStandards()` ordered by `"id"`, a field none of
+     the 61 seeded documents carry, so Firestore excluded every one of them and
+     the screen rendered an empty table over live data. Now orders by
+     `FieldPath.documentId()` and fills `id` from the document ID on read.
+   - **F3** the same missing field left `initial.id` undefined on the partner
+     edit form, so 5 of the 6 existing partner documents could not be saved.
+     `partner-locations.ts` now has a `fromFirestore` like alert-zones.
+   - **F4** `price_standards.image_url` (used by the Scanner result screen) is
+     absent from the CMS input schema, and `.set()` replaces the document — so
+     editing a dish deleted its reference photo. `updatePriceStandard()` now
+     reads the stored value back and carries it forward. Staff still cannot set
+     or clear that photo from the CMS; the image preview in §3 is still unbuilt.
+   - **F2** the five seeded `alert_zones` carry a `radius_km` ~13% smaller than
+     their own polygon's bounding radius, which can make `isInsideZone` reject a
+     user standing in the zone. The CMS was always correct here — the Flutter
+     repo's seed scripts were not, and are now. ⚠️ **The five live zone
+     documents are still wrong**: open each one in the CMS and press Save so it
+     recomputes the derived fields, then re-run `verify_data_contract.js`.
+5. ~~Firebase Storage photo upload (`lib/actions/partner-locations.ts` →
+   `uploadPartnerImage`).~~ **RESOLVED 2026-08-14 — the happy path works.**
+   `partner_locations/bp_samila_beach_hotel` holds a real download URL written
+   by this code on 2026-08-09, and fetching it anonymously returns HTTP 200,
+   `image/jpeg`, 27,638 bytes. The bucket
+   (`thaishield-ai-790eb.firebasestorage.app`) also verified to exist — it
+   answers 403 while `…appspot.com` answers 404. Both earlier bugs (missing
+   `storageBucket`, `makePublic()` under uniform bucket-level access) stay
+   fixed; the download-token approach is confirmed in production.
    - The missing `storageBucket` app option is fixed (see above).
    - `makePublic()` is gone. It threw *"Cannot update access control for an
      object when uniform bucket-level access is enabled"* — UBLA is on by
@@ -177,11 +225,6 @@ to 10.3.0 (much older, likely missing APIs this project uses).
 
 ## Not started / deferred
 
-- `partner_locations.type` enum expansion (3 → 11 categories) — the
-  Flutter app's own Phase 2 work for this hasn't shipped yet and the
-  actual 11 values aren't specified anywhere, so `lib/schemas/partner-locations.ts`
-  intentionally mirrors CLAUDE.md's current 3-value enum. Update it (and
-  its tests) the moment that Flutter-side schema change ships.
 - GitHub Actions CI/CD for preview/production deploys (`WEB_ADMIN.md`
   §10.5) — optional, not required for the first manual deploy.
 - The line-item 1.5 legal-wording **QA pass** itself (human review of all
