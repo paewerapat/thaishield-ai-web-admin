@@ -2,15 +2,45 @@ import { z } from "zod";
 
 // Matches CLAUDE.md's partner_locations Firestore schema (WEB_ADMIN.md §3).
 //
-// NOTE: CLAUDE.md documents `type` as this 3-value enum today. WEB_ADMIN.md
-// §3 flags that the Flutter app's own Phase 2 roadmap plans to expand it to
-// 11 categories — that expansion hasn't shipped yet (it's not in CLAUDE.md's
-// checked-off scope) and the actual 11 values aren't specified anywhere yet,
-// so this intentionally mirrors CLAUDE.md's current 3 values rather than
-// guessing at unannounced ones. Update this list (and this module's tests)
-// the moment that schema change ships — tracked in STATUS.md.
-export const PARTNER_LOCATION_TYPES = ["restaurant", "hotel", "transport"] as const;
+// The 3 -> 11 `type` expansion shipped with the Flutter app's Phase 2A task
+// 2.3. These 11 values mirror, in the same order, the `PartnerCategory` enum
+// in `lib/core/models/partner_category.dart` in the Flutter repo — the two
+// lists must always change together, or staff enter types the app cannot
+// render (or the app filters on types staff cannot enter).
+//
+// The first three keep their original strings, so existing documents stay
+// valid and needed no migration.
+export const PARTNER_LOCATION_TYPES = [
+  "restaurant",
+  "hotel",
+  "transport",
+  "hospital",
+  "pharmacy",
+  "police",
+  "tourist_police",
+  "atm_bank",
+  "shopping",
+  "attraction",
+  "tourist_info",
+] as const;
 export type PartnerLocationType = (typeof PARTNER_LOCATION_TYPES)[number];
+
+/// Human-readable labels for the type picker — the raw slugs read badly once
+/// they contain underscores ("tourist_police").
+export const PARTNER_LOCATION_TYPE_LABELS: Record<PartnerLocationType, string> =
+  {
+    restaurant: "Restaurant",
+    hotel: "Hotel",
+    transport: "Transport",
+    hospital: "Hospital",
+    pharmacy: "Pharmacy",
+    police: "Police Station",
+    tourist_police: "Tourist Police",
+    atm_bank: "Bank & ATM",
+    shopping: "Shops & Markets",
+    attraction: "Attraction",
+    tourist_info: "Tourist Information",
+  };
 
 export const PARTNER_LOCATION_PRICE_TIERS = ["fair", "caution", "high"] as const;
 export type PartnerLocationPriceTier =

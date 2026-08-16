@@ -19,6 +19,7 @@ import {
 import { savePartnerLocation } from "@/lib/actions/partner-locations";
 import {
   PARTNER_LOCATION_PRICE_TIERS,
+  PARTNER_LOCATION_TYPE_LABELS,
   PARTNER_LOCATION_TYPES,
   partnerLocationInputSchema,
   type PartnerLocationInput,
@@ -159,8 +160,8 @@ export function PartnerLocationForm({
               </SelectTrigger>
               <SelectContent>
                 {PARTNER_LOCATION_TYPES.map((t) => (
-                  <SelectItem key={t} value={t} className="capitalize">
-                    {t}
+                  <SelectItem key={t} value={t}>
+                    {PARTNER_LOCATION_TYPE_LABELS[t]}
                   </SelectItem>
                 ))}
               </SelectContent>

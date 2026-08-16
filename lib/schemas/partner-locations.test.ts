@@ -3,6 +3,8 @@ import {
   assertValidImageFile,
   extensionForImageType,
   MAX_IMAGE_BYTES,
+  PARTNER_LOCATION_TYPE_LABELS,
+  PARTNER_LOCATION_TYPES,
   partnerLocationInputSchema,
 } from "./partner-locations";
 
@@ -77,6 +79,48 @@ describe("partnerLocationInputSchema", () => {
     expect(
       partnerLocationInputSchema.safeParse(validInput({ type: "museum" })).success,
     ).toBe(false);
+  });
+
+  // The 3 -> 11 expansion (Flutter Phase 2A task 2.3). This list is mirrored
+  // by PartnerCategory in lib/core/models/partner_category.dart in the Flutter
+  // repo; if you change one, change the other.
+  it("accepts all 11 documented category values", () => {
+    expect(PARTNER_LOCATION_TYPES).toEqual([
+      "restaurant",
+      "hotel",
+      "transport",
+      "hospital",
+      "pharmacy",
+      "police",
+      "tourist_police",
+      "atm_bank",
+      "shopping",
+      "attraction",
+      "tourist_info",
+    ]);
+
+    for (const type of PARTNER_LOCATION_TYPES) {
+      expect(
+        partnerLocationInputSchema.safeParse(validInput({ type })).success,
+      ).toBe(true);
+    }
+  });
+
+  it("keeps the three original types valid, so existing documents still parse", () => {
+    for (const type of ["restaurant", "hotel", "transport"]) {
+      expect(
+        partnerLocationInputSchema.safeParse(validInput({ type })).success,
+      ).toBe(true);
+    }
+  });
+
+  it("labels every type for the picker", () => {
+    for (const type of PARTNER_LOCATION_TYPES) {
+      expect(PARTNER_LOCATION_TYPE_LABELS[type]).toBeTruthy();
+    }
+    expect(Object.keys(PARTNER_LOCATION_TYPE_LABELS)).toHaveLength(
+      PARTNER_LOCATION_TYPES.length,
+    );
   });
 
   it("rejects a price_tier outside the fixed enum", () => {

@@ -103,9 +103,13 @@ set server-side on every write (never trust a client-supplied timestamp).
 ```
 Admin screen: CRUD with a **real photo upload** to Firebase Storage (not a hotlinked URL
 field) — on upload, store the resulting Storage download URL into `image_url`. A map picker
-(or manual lat/lng input) sets `lat`/`lng`. Note the Flutter app's Phase 2 roadmap expands
-`type` from 3 → 11 categories; if that Flutter work ships before/during this admin build,
-mirror the same enum here rather than hardcoding just 3 values in a `<select>`.
+(or manual lat/lng input) sets `lat`/`lng`.
+
+`type` has **11** values as of 2026-08-11 (Flutter Phase 2A task 2.3):
+`restaurant, hotel, transport, hospital, pharmacy, police, tourist_police, atm_bank,
+shopping, attraction, tourist_info`. They live in `PARTNER_LOCATION_TYPES`
+(`lib/schemas/partner-locations.ts`) and mirror `PartnerCategory` in
+`lib/core/models/partner_category.dart` in the Flutter repo — never edit one list alone.
 
 ### `alert_zones`
 ```
