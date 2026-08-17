@@ -37,14 +37,19 @@ export default async function AdminLayout({
 
         {/* Same Bangkok skyline the Flutter app uses behind its bottom nav
             (CLAUDE.md §8), dropped to a whisper so it reads as texture on the
-            green rather than as content. Decorative only — aria-hidden. */}
+            green rather than as content. Decorative only — aria-hidden.
+
+            Pinned to bottom-0 so the skyline sits on the floor of the sidebar
+            the way it does on the app's bottom nav. It used to float at
+            bottom-16, which left a band of flat green beneath it and read as a
+            misplaced image rather than a horizon. */}
         <Image
           src="/images/skyline.png"
           alt=""
           aria-hidden
           width={904}
           height={264}
-          className="pointer-events-none absolute inset-x-0 bottom-16 -z-0 w-full select-none opacity-[0.07]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-0 w-full select-none opacity-[0.07]"
         />
 
         <div className="relative border-t border-white/10 px-3 pt-4">

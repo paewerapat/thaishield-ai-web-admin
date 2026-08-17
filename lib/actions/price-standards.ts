@@ -120,12 +120,11 @@ export async function deletePriceStandard(id: string): Promise<ActionResult> {
   }
 }
 
-/** Plain `<form action={...}>` wrapper — reads the id from a hidden input so the
- * form action type stays `(formData: FormData) => Promise<void>`, avoiding the
- * `.bind()` + non-void-return typing mismatch. */
+/** FormData wrapper — reads the id from a hidden field so the caller does not
+ * need `.bind()`. Returns the result rather than void so DeleteRowButton can
+ * tell the user whether the delete actually happened. */
 export async function deletePriceStandardFormAction(
   formData: FormData,
-): Promise<void> {
-  const id = String(formData.get("id") ?? "");
-  await deletePriceStandard(id);
+): Promise<ActionResult> {
+  return deletePriceStandard(String(formData.get("id") ?? ""));
 }

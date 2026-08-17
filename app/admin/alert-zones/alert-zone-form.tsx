@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
 import { PolygonMapEditor } from "@/components/admin/polygon-map-editor";
 import { PolygonPointListEditor } from "@/components/admin/polygon-point-list-editor";
@@ -96,10 +97,24 @@ export function AlertZoneForm({
 
     setSubmitting(false);
     if (!result.ok) {
+      // Kept inline as well as toasted — a wording rejection lists the words
+      // to replace, which the user needs in front of them while rewriting.
       setFormError(result.error);
+      toast.error("Could not save this alert zone", {
+        description: result.error,
+      });
       return;
     }
 
+    toast.success(
+      mode === "create"
+        ? `Added “${parsed.data.name}”`
+        : `Saved “${parsed.data.name}”`,
+      {
+        description:
+          "Centre and radius were recalculated from the polygon you drew.",
+      },
+    );
     router.push("/admin/alert-zones");
     router.refresh();
   }

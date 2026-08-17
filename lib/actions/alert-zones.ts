@@ -101,7 +101,8 @@ export async function deleteAlertZone(id: string): Promise<ActionResult> {
   }
 }
 
-export async function deleteAlertZoneFormAction(formData: FormData): Promise<void> {
-  const id = String(formData.get("id") ?? "");
-  await deleteAlertZone(id);
+export async function deleteAlertZoneFormAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  return deleteAlertZone(String(formData.get("id") ?? ""));
 }

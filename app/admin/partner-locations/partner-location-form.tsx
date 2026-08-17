@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImageOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,10 +109,25 @@ export function PartnerLocationForm({
 
     setSubmitting(false);
     if (!result.ok) {
+      // Kept inline as well as toasted — a photo-upload failure in particular
+      // needs to stay on screen while the user picks a different file.
       setFormError(result.error);
+      toast.error("Could not save this partner location", {
+        description: result.error,
+      });
       return;
     }
 
+    toast.success(
+      mode === "create"
+        ? `Added “${parsed.data.name}”`
+        : `Saved “${parsed.data.name}”`,
+      {
+        description: imageFile
+          ? "Photo uploaded. The app picks this up on its next read."
+          : "The ThaiShield app picks this up on its next read.",
+      },
+    );
     router.push("/admin/partner-locations");
     router.refresh();
   }

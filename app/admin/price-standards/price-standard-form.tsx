@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,10 +108,21 @@ export function PriceStandardForm({
 
     setSubmitting(false);
     if (!result.ok) {
+      // Kept inline as well as toasted: the toast is gone in five seconds, and
+      // this is the message the user needs while retyping the field it names.
       setFormError(result.error);
+      toast.error("Could not save this price standard", {
+        description: result.error,
+      });
       return;
     }
 
+    toast.success(
+      mode === "create"
+        ? `Added “${parsed.data.name_en}”`
+        : `Saved “${parsed.data.name_en}”`,
+      { description: "The ThaiShield app picks this up on its next read." },
+    );
     router.push("/admin/price-standards");
     router.refresh();
   }

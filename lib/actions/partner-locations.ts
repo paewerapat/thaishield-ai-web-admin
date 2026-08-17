@@ -176,7 +176,6 @@ export async function deletePartnerLocation(id: string): Promise<ActionResult> {
 
 export async function deletePartnerLocationFormAction(
   formData: FormData,
-): Promise<void> {
-  const id = String(formData.get("id") ?? "");
-  await deletePartnerLocation(id);
+): Promise<ActionResult> {
+  return deletePartnerLocation(String(formData.get("id") ?? ""));
 }
