@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ImageOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
+import { PointMapPicker } from "@/components/admin/point-map-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,19 @@ export function PartnerLocationForm({
   ) {
     setValues((prev) => ({ ...prev, [name]: value }));
   }
+
+  // Null while either field is empty or half-typed ("13." parses as 13, which
+  // would jump the pin to the Gulf of Thailand on every keystroke), so the map
+  // simply shows no marker until there is a real pair to show.
+  const latNum = Number(values.lat);
+  const lngNum = Number(values.lng);
+  const pickedPoint =
+    values.lat.trim() !== "" &&
+    values.lng.trim() !== "" &&
+    Number.isFinite(latNum) &&
+    Number.isFinite(lngNum)
+      ? { lat: latNum, lng: lngNum }
+      : null;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -247,7 +261,17 @@ export function PartnerLocationForm({
         <CardHeader>
           <CardTitle className="text-base">Location</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+        <CardContent className="space-y-4">
+          <PointMapPicker
+            value={pickedPoint}
+            onChange={(point) => {
+              // Six decimals is roughly 0.1 m — more than a shop pin needs,
+              // and it keeps the inputs readable.
+              updateField("lat", point.lat.toFixed(6));
+              updateField("lng", point.lng.toFixed(6));
+            }}
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Latitude" htmlFor="lat" error={fieldErrors.lat}>
             <Input
               id="lat"
@@ -269,6 +293,7 @@ export function PartnerLocationForm({
               placeholder="100.5018"
             />
           </FormField>
+          </div>
         </CardContent>
       </Card>
 
