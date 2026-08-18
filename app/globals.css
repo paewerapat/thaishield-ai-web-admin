@@ -86,3 +86,41 @@
     text-wrap: balance;
   }
 }
+
+/*
+ * Route-change progress bar — components/admin/route-progress.tsx.
+ *
+ * Deliberately outside @layer: Tailwind's @layer directive reorders what it
+ * wraps, and a @keyframes block is not a utility. Plain CSS appended after the
+ * utilities layer is the safe place for it.
+ *
+ * The real duration is unknown (a Firestore read behind a possibly cold Cloud
+ * Run instance), so the bar creeps toward the right edge without ever arriving
+ * — decelerating hard, so a slow load looks like progress rather than a stall.
+ */
+@keyframes route-progress {
+  0% {
+    transform: scaleX(0.03);
+  }
+  30% {
+    transform: scaleX(0.45);
+  }
+  60% {
+    transform: scaleX(0.7);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}
+
+.animate-route-progress {
+  transform-origin: left;
+  animation: route-progress 10s cubic-bezier(0.15, 0.85, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-route-progress {
+    animation: none;
+    transform: scaleX(0.92);
+  }
+}

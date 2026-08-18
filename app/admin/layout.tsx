@@ -4,6 +4,7 @@ import Image from "next/image";
 import { LogOut } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { BrandMark } from "@/components/admin/brand-mark";
+import { RouteProgress } from "@/components/admin/route-progress";
 import { Button } from "@/components/ui/button";
 import { signOutAdmin } from "@/lib/auth/actions";
 import { getAdminSession } from "@/lib/auth/session";
@@ -20,6 +21,11 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen">
+      {/* Sits above the fixed sidebar and mobile header so it is visible from
+          every admin route. Client Component; the layout itself stays a Server
+          Component because it calls getAdminSession(). */}
+      <RouteProgress />
+
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col overflow-hidden bg-brand px-4 py-6 md:flex">
         <div className="flex items-center gap-2.5 px-3">
           <BrandMark size={36} />

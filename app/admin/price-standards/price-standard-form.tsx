@@ -106,8 +106,13 @@ export function PriceStandardForm({
         ? await createPriceStandard(parsed.data)
         : await updatePriceStandard(parsed.data.id, parsed.data);
 
-    setSubmitting(false);
+    // Left true on the success path: the button keeps its spinner through
+    // router.push, which has to fetch the list page from the server before it
+    // can render. Flipping it back here put "Create"/"Save changes" back under
+    // the cursor during that gap, which read as "nothing happened" and invited
+    // a second click.
     if (!result.ok) {
+      setSubmitting(false);
       // Kept inline as well as toasted: the toast is gone in five seconds, and
       // this is the message the user needs while retyping the field it names.
       setFormError(result.error);

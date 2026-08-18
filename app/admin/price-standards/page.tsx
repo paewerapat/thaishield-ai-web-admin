@@ -19,10 +19,7 @@ import {
   deletePriceStandardFormAction,
   listPriceStandards,
 } from "@/lib/actions/price-standards";
-
-const TITLE = "Price Standards";
-const DESCRIPTION =
-  "Typical price ranges the app's Scanner and Map compare against.";
+import { DESCRIPTION, TITLE } from "./meta";
 
 export default async function PriceStandardsPage() {
   let items;

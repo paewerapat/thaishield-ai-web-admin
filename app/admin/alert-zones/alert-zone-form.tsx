@@ -95,8 +95,13 @@ export function AlertZoneForm({
 
     const result = await saveAlertZone(parsed.data, mode, initial?.id);
 
-    setSubmitting(false);
+    // Left true on the success path: the button keeps its spinner through
+    // router.push, which has to fetch the list page from the server before it
+    // can render. Flipping it back here put "Create"/"Save changes" back under
+    // the cursor during that gap, which read as "nothing happened" and invited
+    // a second click.
     if (!result.ok) {
+      setSubmitting(false);
       // Kept inline as well as toasted — a wording rejection lists the words
       // to replace, which the user needs in front of them while rewriting.
       setFormError(result.error);

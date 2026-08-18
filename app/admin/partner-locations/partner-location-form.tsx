@@ -121,8 +121,13 @@ export function PartnerLocationForm({
 
     const result = await savePartnerLocation(formData, mode, initial?.id);
 
-    setSubmitting(false);
+    // Left true on the success path: the button keeps its spinner through
+    // router.push, which has to fetch the list page from the server before it
+    // can render. Flipping it back here put "Create"/"Save changes" back under
+    // the cursor during that gap, which read as "nothing happened" and invited
+    // a second click.
     if (!result.ok) {
+      setSubmitting(false);
       // Kept inline as well as toasted — a photo-upload failure in particular
       // needs to stay on screen while the user picks a different file.
       setFormError(result.error);

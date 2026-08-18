@@ -19,9 +19,7 @@ import {
   deletePartnerLocationFormAction,
   listPartnerLocations,
 } from "@/lib/actions/partner-locations";
-
-const TITLE = "Partner Locations";
-const DESCRIPTION = "Partner pins shown on the app's Smart Map.";
+import { DESCRIPTION, TITLE } from "./meta";
 
 export default async function PartnerLocationsPage() {
   let items;

@@ -19,10 +19,7 @@ import {
   deleteAlertZoneFormAction,
   listAlertZones,
 } from "@/lib/actions/alert-zones";
-
-const TITLE = "Alert Zones";
-const DESCRIPTION =
-  "Travel-advisory area boundaries drawn on the app's Smart Map.";
+import { DESCRIPTION, TITLE } from "./meta";
 
 export default async function AlertZonesPage() {
   let items;
