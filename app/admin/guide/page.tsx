@@ -7,57 +7,59 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-/**
- * Written in Thai on purpose: the people who need a manual for this admin are
- * the client's Thai-speaking staff, not the developer. The rest of the admin
- * chrome stays English because that is what it already was — mixing is worse
- * than either, but retranslating every existing screen was not the ask.
- */
 export const metadata = {
-  title: "คู่มือการใช้งาน",
+  title: "User Guide",
 };
 
-/** §10 of the project rules, in the form staff actually need: what to type. */
+/**
+ * §5's wording rules, in the form staff actually need: not the principle, the
+ * sentence to type instead.
+ */
 const WORDING = [
-  { avoid: "โกง / หลอกลวง / ต้มตุ๋น", use: "แจ้งเตือนการเดินทาง" },
-  { avoid: "ร้านนี้โกงราคา", use: "ราคาสูงกว่าช่วงราคาทั่วไป" },
-  { avoid: "ราคาแพงเกินจริง", use: "สูงกว่าค่าเฉลี่ยในพื้นที่" },
-  { avoid: "อย่าไปร้านนี้", use: "เปรียบเทียบราคาก่อนตัดสินใจ" },
-  { avoid: "พื้นที่อันตราย", use: "พื้นที่คำแนะนำสำหรับนักท่องเที่ยว" },
-  { avoid: "แหล่งหลอกนักท่องเที่ยว", use: "พื้นที่ที่ชุมชนแจ้งเตือน" },
-  { avoid: "รับประกันราคายุติธรรม", use: "ราคามาตรฐานที่รับรอง" },
+  { avoid: "Scam, fraud, cheating", use: "Travel Alert" },
+  { avoid: "This shop overcharges", use: "Price Is Higher Than Typical Range" },
+  { avoid: "Rip-off prices", use: "Above Typical Range" },
+  { avoid: "Avoid this shop", use: "Compare Before Purchasing" },
+  { avoid: "Dangerous area", use: "Tourist Advisory Area" },
+  { avoid: "Tourist trap", use: "Community Alert Zone" },
+  { avoid: "Guaranteed fair price", use: "Certified Fair Price" },
 ];
 
 export default function GuidePage() {
   return (
     <>
       <PageHeader
-        title="คู่มือการใช้งาน"
-        description="ระบบหลังบ้านนี้แก้ข้อมูลที่แอปบนมือถือดึงไปแสดงโดยตรง แก้แล้วมีผลทันที ไม่ต้องรอรอบอัปเดตแอป"
+        title="User Guide"
+        description="What this admin changes, and the rules that apply to anything you type into it."
       />
 
-      {/* The single most important thing on this page, so it opens the page
-          rather than sitting at the bottom where nobody scrolls to. */}
+      {/* The most consequential thing on this page, so it opens the page
+          instead of sitting at the bottom where nobody scrolls to. */}
       <Card className="border-warning/40 bg-warning/5">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="size-4 text-amber-700" aria-hidden />
-            กฎการเขียนข้อความ — สำคัญที่สุด
+            Wording rules — read this first
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            ข้อความที่พิมพ์ในระบบนี้จะไปปรากฏต่อนักท่องเที่ยวจริง และอาจพาดพิงถึงร้านค้าหรือพื้นที่ที่ระบุตัวได้
-            แอปนี้มีหน้าที่ <strong className="text-foreground">ให้ข้อมูลเพื่อให้ผู้ใช้ตัดสินใจเอง</strong>{" "}
-            ไม่ใช่ตัดสินหรือกล่าวหาใคร การเขียนกล่าวหาร้านที่ระบุชื่อได้อาจนำไปสู่การถูกฟ้องหมิ่นประมาท
+            Text entered here is shown to real tourists, next to businesses and
+            areas that can be identified by name. The app&rsquo;s job is to{" "}
+            <strong className="text-foreground">
+              inform people so they can decide for themselves
+            </strong>{" "}
+            — never to judge or accuse. Accusatory wording about a named shop is
+            what creates defamation exposure, so it is ruled out even when it
+            feels deserved.
           </p>
 
           <div className="overflow-x-auto rounded-md border border-warning/30 bg-background">
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-2 font-medium">ห้ามเขียน</th>
-                  <th className="px-3 py-2 font-medium">ให้เขียนแทน</th>
+                  <th className="px-3 py-2 font-medium">Never write</th>
+                  <th className="px-3 py-2 font-medium">Write instead</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,14 +87,15 @@ export default function GuidePage() {
           </div>
 
           <p className="rounded-md bg-destructive/5 px-3 py-2 text-destructive">
-            <strong>ระบบตรวจให้อัตโนมัติเฉพาะข้อความภาษาอังกฤษ</strong> —
-            ข้อความภาษาไทยที่พิมพ์เอง ไม่มีอะไรตรวจให้ ต้องอ่านทวนเองก่อนบันทึกทุกครั้ง
+            <strong>The automated check reads English only.</strong> Thai free
+            text has nothing watching it, so it has to be re-read by a person
+            before saving. This is the gap most likely to let something through.
           </p>
         </CardContent>
       </Card>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
-        เมนูแต่ละอันแก้อะไร
+        What each section changes
       </h2>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -102,21 +105,23 @@ export default function GuidePage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              ช่วงราคาปกติของอาหารและบริการ ใช้เป็นตัวเทียบตอนผู้ใช้สแกนเมนูหรือป้ายราคา
+              The typical price range for a dish or service. The app compares a
+              scanned menu or price tag against these.
             </p>
             <ul className="list-disc space-y-1 pl-4">
               <li>
-                กรอกชื่อให้ครบ <strong>ทั้ง 6 ภาษา</strong> ถ้าเว้นว่าง
-                ผู้ใช้ภาษานั้นจะเห็นเป็นภาษาอังกฤษแทน
+                Fill in the name in <strong>all six languages</strong>. A blank
+                one falls back to English for that reader.
               </li>
               <li>
-                รหัส (id) ใช้ตัวพิมพ์เล็ก ตัวเลข และขีดล่างเท่านั้น เช่น{" "}
-                <code className="rounded bg-muted px-1">pad_thai</code>
+                The id takes lowercase letters, digits and underscores only —
+                e.g. <code className="rounded bg-muted px-1">pad_thai</code>.
               </li>
               <li>
-                <strong>ตั้งรหัสแล้วเปลี่ยนไม่ได้</strong> ถ้าตั้งผิดต้องลบแล้วสร้างใหม่
+                <strong>An id cannot be changed after saving.</strong> Fixing a
+                typo means deleting the entry and creating it again.
               </li>
-              <li>ราคาต่ำสุดต้องน้อยกว่าราคาสูงสุด และเป็นหน่วยบาท</li>
+              <li>Minimum must be below maximum, and both are in THB.</li>
             </ul>
           </CardContent>
         </Card>
@@ -126,23 +131,31 @@ export default function GuidePage() {
             <CardTitle className="text-base">Partner Locations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>หมุดร้านค้าและสถานที่ที่แสดงบนหน้าแผนที่ของแอป</p>
+            <p>The pins shown on the app&rsquo;s Smart Map.</p>
             <ul className="list-disc space-y-1 pl-4">
               <li>
-                <strong>ประเภท (type)</strong> มี 11 แบบ เลือกจากรายการเท่านั้น
-                ห้ามพิมพ์เอง เพราะแอปรู้จักเฉพาะค่าที่กำหนดไว้
+                <strong>Type</strong> has eleven values — pick from the list.
+                The app only knows those, so a typed-in value leaves the pin
+                unrenderable.
               </li>
               <li>
-                <strong>ระดับราคา</strong> — เลือก fair เมื่อราคาอยู่ในช่วงปกติ ·
-                caution / high จะทำให้แอปขึ้นป้าย &ldquo;สูงกว่าช่วงราคาทั่วไป&rdquo;
+                <strong>Price tier</strong> — <em>fair</em> when the price sits
+                in the normal range. <em>caution</em> or <em>high</em> makes the
+                app show &ldquo;Above Typical Range&rdquo;.
               </li>
               <li>
-                <strong>รับรองแล้ว (verified)</strong> ติ๊กเมื่อทีมงานตรวจสอบราคาจริงแล้ว
-                แอปจะขึ้นป้าย &ldquo;ราคามาตรฐานที่รับรอง&rdquo; —
-                อย่าติ๊กถ้ายังไม่ได้ตรวจ
+                <strong>Verified</strong> puts a &ldquo;Certified Fair
+                Price&rdquo; badge in front of tourists. Only tick it once
+                someone has actually checked the prices.
               </li>
-              <li>รูปภาพอัปโหลดได้เลย ถ้าไม่ใส่ แอปจะแสดงไอคอนตามประเภทแทน</li>
-              <li>พิกัดต้องตรงกับตำแหน่งจริง เพราะแอปใช้คำนวณระยะทางและเส้นทาง</li>
+              <li>
+                A photo is optional; without one the app falls back to the
+                category icon.
+              </li>
+              <li>
+                Coordinates must be accurate — the app measures distance and
+                draws directions from them.
+              </li>
             </ul>
           </CardContent>
         </Card>
@@ -152,28 +165,31 @@ export default function GuidePage() {
             <CardTitle className="text-base">Alert Zones</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>พื้นที่บนแผนที่ที่ระบายสีไว้ วาดขอบเขตเองได้จากแผนที่</p>
+            <p>
+              The shaded areas on the map. Draw the boundary directly on the
+              map.
+            </p>
             <ul className="list-disc space-y-1 pl-4">
               <li>
-                <strong>safe</strong> เขียว · <strong>caution</strong> เหลือง ·{" "}
-                <strong>danger</strong> แดง
+                <strong>safe</strong> green · <strong>caution</strong> amber ·{" "}
+                <strong>danger</strong> red
               </li>
               <li>
-                คำอธิบายคือข้อความที่นักท่องเที่ยวอ่านโดยตรง —
-                จุดที่กฎการเขียนข้างบนสำคัญที่สุด
+                The description is read verbatim by tourists — the place where
+                the wording rules above matter most.
               </li>
               <li>
-                วาดกรอบให้ครอบเฉพาะพื้นที่ที่ตั้งใจ ถ้าวาดเกินไปโดนถนนหรือย่านข้างเคียง
-                คนที่อยู่ตรงนั้นจะได้รับการแจ้งเตือนไปด้วย
+                Keep the outline tight. Overlap a neighbouring street or
+                district and everyone standing there gets the advisory too.
               </li>
-              <li>ระบบคำนวณจุดกึ่งกลางและรัศมีให้เอง ไม่ต้องกรอก</li>
+              <li>The centre point and radius are calculated for you.</li>
             </ul>
           </CardContent>
         </Card>
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
-        ข้อควรระวัง
+        Before you save
       </h2>
 
       <Card>
@@ -181,25 +197,28 @@ export default function GuidePage() {
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
             <span>
-              <strong className="text-foreground">แก้แล้วมีผลทันที</strong> —
-              ไม่มีขั้นตอนตรวจทานก่อนเผยแพร่ และไม่มีปุ่มย้อนกลับ
-              ผู้ใช้ที่เปิดแอปอยู่จะเห็นข้อมูลใหม่ในการโหลดครั้งถัดไป
-              อ่านทวนก่อนกดบันทึกเสมอ
+              <strong className="text-foreground">Changes go live at once.</strong>{" "}
+              There is no review step and no undo. Anyone with the app open sees
+              the new content on their next load.
             </span>
           </p>
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
             <span>
-              <strong className="text-foreground">การลบไม่มีถังขยะ</strong> —
-              ลบแล้วหายถาวร ถ้าไม่แน่ใจให้แก้ไขแทนการลบ
+              <strong className="text-foreground">Deleting is permanent.</strong>{" "}
+              There is no trash to restore from. If you are unsure, edit rather
+              than delete.
             </span>
           </p>
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
             <span>
-              <strong className="text-foreground">ข่าวแจ้งเตือนในแอปไม่ได้แก้จากที่นี่</strong>{" "}
-              — ระบบดึงมาจากสำนักข่าวอัตโนมัติทุก 10 นาที
-              ถ้าเห็นข่าวที่ไม่เกี่ยวข้องให้แจ้งผู้พัฒนา ไม่ต้องหาที่ลบในระบบนี้
+              <strong className="text-foreground">
+                The app&rsquo;s news alerts are not edited here.
+              </strong>{" "}
+              They are pulled from news sources automatically every ten minutes.
+              If something irrelevant appears, tell the developer — there is
+              nothing to delete in this admin.
             </span>
           </p>
         </CardContent>

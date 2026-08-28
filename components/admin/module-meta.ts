@@ -55,15 +55,16 @@ export const ADMIN_MODULES: AdminModule[] = [
   },
   {
     href: "/admin/guide",
-    label: "คู่มือการใช้งาน",
-    description: "วิธีใช้ระบบหลังบ้าน และกฎการเขียนข้อความที่ต้องทำตาม",
+    label: "User Guide",
+    description:
+      "How to use this admin, and the wording rules that apply to what you type.",
     icon: BookOpen,
     isReference: true,
   },
   {
     href: "/admin/progress",
-    label: "ความคืบหน้าโครงการ",
-    description: "สถานะงานแต่ละเฟส สิ่งที่ส่งมอบแล้ว และสิ่งที่ยังรออยู่",
+    label: "Project Progress",
+    description: "Status of each phase, what is delivered, and what is waiting.",
     icon: ListChecks,
     isReference: true,
   },

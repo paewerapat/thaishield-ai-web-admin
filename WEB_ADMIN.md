@@ -201,11 +201,9 @@ Two pages that explain the admin rather than edit Firestore. They are in
 "Project progress" beside three content editors reads as a fourth thing to fill
 in.
 
-**Both are written in Thai.** The people who need a manual for this admin are
-the client's Thai-speaking staff, not the developer. The surrounding chrome
-stays English because that is what it already was; mixing is worse than either,
-but retranslating every existing screen was not what was asked for. If the whole
-admin is ever localised, these two are already on the right side of it.
+**Both are in English**, matching the rest of the admin. They were written in
+Thai first and switched on request the same day (2026-08-28) — a half-Thai
+half-English admin was worse than either.
 
 `/admin/guide` leads with the §10 wording rules rather than burying them, and
 states plainly that the automated linter only reads English — Thai free text has
@@ -217,11 +215,12 @@ before someone has checked.
 
 🚨 `/admin/progress` is **hand-maintained**. Update it when a phase actually
 moves. A status page that quietly goes stale is worse than none, because people
-stop asking the developer and start trusting it. It deliberately carries **no
-payment information** — milestones are between the client and the developer, and
-staff who log in to edit prices have no reason to see them. It also ends with
-what has *not* been tested, because a list of green ticks otherwise implies
-everything is proven and none of the device-dependent work is.
+stop asking the developer and start trusting it. Two things are deliberately absent. **No payment
+information** — milestones are between the client and the developer, and staff
+who log in to edit prices have no reason to see them. And **no list of what
+remains untested**: that was moved to the developer's own tracking on request
+(2026-08-28) so it is reviewed rather than read by the client. Keep it that way;
+the code comment says so too.
 
 ---
 
