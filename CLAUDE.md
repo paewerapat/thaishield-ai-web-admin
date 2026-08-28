@@ -1,3 +1,19 @@
+> # 🚨 STOP — this file is a stale copy of the *Flutter app's* CLAUDE.md
+>
+> It sits in the **web admin** repository but describes the mobile app, and its
+> facts are out of date: it names **GNews** (replaced by newsdata.io on
+> 2026-08-17), a **45,000 THB** budget (the agreed figure is 32,000), and marks
+> "Phase 1: Firebase Backend Setup" as in progress when it shipped long ago.
+>
+> **For this repository, read [`WEB_ADMIN.md`](./WEB_ADMIN.md)** — that is the
+> blueprint for the CMS, and [`STATUS.md`](./STATUS.md) for what currently works.
+> For the app, read `CLAUDE.md` in the `thaishield_ai` repo, which is maintained.
+>
+> Kept only because something may still link to it. Do not extend it, and do not
+> trust a fact here without checking it against the file it was copied from.
+
+---
+
 # ThaiShield AI - Project Blueprint & Developer Rules (MVP Version)
 
 You are an expert Flutter & Firebase developer helper. You are assisting a developer working on a Windows/Linux environment (NO LOCAL MAC MACHINE AVAILABLE). Follow these specifications strictly.

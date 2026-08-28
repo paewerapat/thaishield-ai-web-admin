@@ -193,6 +193,38 @@ the Flutter app's own vetted copy. Per `CLAUDE.md` Section 7:
   keyword-blocklist check on the free-text form fields (client + server-side) that flags the
   "Avoid" column terms before save, as a standing guardrail beyond the one-time QA pass.
 
+## 5.5 Reference pages — `/admin/guide` and `/admin/progress` (added 2026-08-28)
+
+Two pages that explain the admin rather than edit Firestore. They are in
+`ADMIN_MODULES` so they appear in the nav, and carry `isReference: true` so
+`CONTENT_MODULES` leaves them out of the dashboard cards — a card promising
+"Project progress" beside three content editors reads as a fourth thing to fill
+in.
+
+**Both are written in Thai.** The people who need a manual for this admin are
+the client's Thai-speaking staff, not the developer. The surrounding chrome
+stays English because that is what it already was; mixing is worse than either,
+but retranslating every existing screen was not what was asked for. If the whole
+admin is ever localised, these two are already on the right side of it.
+
+`/admin/guide` leads with the §10 wording rules rather than burying them, and
+states plainly that the automated linter only reads English — Thai free text has
+nothing checking it (§5). The per-collection notes are the ones staff actually
+get wrong: ids are immutable after creation, `type` must be picked from the
+eleven known values or the app cannot render the pin, and `is_verified` puts a
+"Certified Fair Price" badge in front of tourists so it must not be ticked
+before someone has checked.
+
+🚨 `/admin/progress` is **hand-maintained**. Update it when a phase actually
+moves. A status page that quietly goes stale is worse than none, because people
+stop asking the developer and start trusting it. It deliberately carries **no
+payment information** — milestones are between the client and the developer, and
+staff who log in to edit prices have no reason to see them. It also ends with
+what has *not* been tested, because a list of green ticks otherwise implies
+everything is proven and none of the device-dependent work is.
+
+---
+
 ## 6. Out of Scope (do not build)
 
 - Anything from `Requirement.html` Phase 2 (Safety Radar, Route Suggestion, IAP/paywall) —

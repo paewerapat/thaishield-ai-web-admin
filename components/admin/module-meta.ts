@@ -1,5 +1,7 @@
 import {
+  BookOpen,
   LayoutDashboard,
+  ListChecks,
   MapPin,
   ShieldAlert,
   Tags,
@@ -16,6 +18,12 @@ export interface AdminModule {
   label: string;
   description: string;
   icon: LucideIcon;
+  /**
+   * Reference pages — they explain the admin rather than edit Firestore. They
+   * belong in the nav, but not among the dashboard's content cards, which are
+   * meant to answer "what can I change from here".
+   */
+  isReference?: boolean;
 }
 
 export const ADMIN_MODULES: AdminModule[] = [
@@ -45,7 +53,27 @@ export const ADMIN_MODULES: AdminModule[] = [
     description: "Draw and edit travel-advisory area boundaries on the map.",
     icon: ShieldAlert,
   },
+  {
+    href: "/admin/guide",
+    label: "คู่มือการใช้งาน",
+    description: "วิธีใช้ระบบหลังบ้าน และกฎการเขียนข้อความที่ต้องทำตาม",
+    icon: BookOpen,
+    isReference: true,
+  },
+  {
+    href: "/admin/progress",
+    label: "ความคืบหน้าโครงการ",
+    description: "สถานะงานแต่ละเฟส สิ่งที่ส่งมอบแล้ว และสิ่งที่ยังรออยู่",
+    icon: ListChecks,
+    isReference: true,
+  },
 ];
 
-/** Everything except the dashboard itself — what the dashboard links out to. */
-export const CONTENT_MODULES = ADMIN_MODULES.filter((m) => m.href !== "/admin");
+/**
+ * The dashboard's cards: what a staff member can actually edit. Reference
+ * pages are deliberately left out — a card promising "Project progress" beside
+ * three content editors reads as a fourth thing to fill in.
+ */
+export const CONTENT_MODULES = ADMIN_MODULES.filter(
+  (m) => m.href !== "/admin" && !m.isReference,
+);
