@@ -16,6 +16,11 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
   return {
     id,
     name: data.name,
+    name_th: data.name_th ?? "",
+    name_zh: data.name_zh ?? "",
+    name_ko: data.name_ko ?? "",
+    name_ru: data.name_ru ?? "",
+    name_ja: data.name_ja ?? "",
     risk_level: data.risk_level,
     description_en: data.description_en,
     description_th: data.description_th,

@@ -32,7 +32,18 @@ function fromFirestore(
   id: string,
   data: FirebaseFirestore.DocumentData,
 ): PartnerLocation {
-  return { ...data, id } as PartnerLocation;
+  // The optional name fields arrived after most rows were written, so a spread
+  // alone would hand the form `undefined` while the type promises a string.
+  // Defaults first, document second, id last.
+  return {
+    name_th: "",
+    name_zh: "",
+    name_ko: "",
+    name_ru: "",
+    name_ja: "",
+    ...data,
+    id,
+  } as PartnerLocation;
 }
 
 export async function listPartnerLocations(): Promise<PartnerLocation[]> {

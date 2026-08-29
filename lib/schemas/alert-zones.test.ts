@@ -130,3 +130,35 @@ describe("advisory text exists in every language the app offers", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("optional names in other languages", () => {
+  // The opposite rule to the descriptions above, and deliberately so: a name
+  // is a proper noun. Requiring six would produce the English copied five
+  // times, or a name invented for a real place.
+  it("accepts a zone with no translated names at all", () => {
+    const result = alertZoneInputSchema.safeParse(validInput());
+    expect(result.success).toBe(true);
+  });
+
+  it("defaults the missing ones to empty rather than undefined", () => {
+    // The app treats empty as "fall back to the main name". undefined would
+    // reach Firestore as a missing field and read back inconsistently.
+    const result = alertZoneInputSchema.parse(validInput());
+    expect(result.name_zh).toBe("");
+    expect(result.name_ja).toBe("");
+  });
+
+  it("keeps an official name when one is given", () => {
+    const result = alertZoneInputSchema.parse(
+      validInput({ name_zh: "暹罗广场" }),
+    );
+    expect(result.name_zh).toBe("暹罗广场");
+  });
+
+  it("trims a name that is only whitespace down to empty", () => {
+    // Staff tab through the form and leave spaces. Empty means "use the main
+    // name"; a space would mean "show a blank where a place name belongs".
+    const result = alertZoneInputSchema.parse(validInput({ name_ko: "   " }));
+    expect(result.name_ko).toBe("");
+  });
+});

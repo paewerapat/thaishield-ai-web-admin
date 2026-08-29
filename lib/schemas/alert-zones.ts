@@ -43,6 +43,17 @@ export const alertZoneInputSchema = z
         "ID must contain only lowercase letters, numbers, and underscores",
       ),
     name: z.string().trim().min(1, "Name is required"),
+    // Optional official names, unlike the advisory text above which is
+    // required in all six. A business or place name usually has no
+    // translation; requiring six would produce the English copied five times,
+    // or an invented name for a real place. Filled only where an official
+    // name exists — Siam Square as 暹罗广场 — and `name` carries the rest.
+    name_th: z.string().trim().default(""),
+    name_zh: z.string().trim().default(""),
+    name_ko: z.string().trim().default(""),
+    name_ru: z.string().trim().default(""),
+    name_ja: z.string().trim().default(""),
+
     polygon: z
       .array(latLngSchema)
       .min(3, "A polygon needs at least 3 points"),

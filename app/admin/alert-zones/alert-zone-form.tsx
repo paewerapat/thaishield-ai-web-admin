@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
+import {
+  OptionalNameFields,
+  type NameLanguageField,
+} from "@/components/admin/optional-name-fields";
 import { PolygonMapEditor } from "@/components/admin/polygon-map-editor";
 import { PolygonPointListEditor } from "@/components/admin/polygon-point-list-editor";
 import { Button } from "@/components/ui/button";
@@ -49,6 +53,11 @@ function toFieldValues(input?: AlertZoneInput) {
   return {
     id: input?.id ?? "",
     name: input?.name ?? "",
+    name_th: input?.name_th ?? "",
+    name_zh: input?.name_zh ?? "",
+    name_ko: input?.name_ko ?? "",
+    name_ru: input?.name_ru ?? "",
+    name_ja: input?.name_ja ?? "",
     risk_level: input?.risk_level ?? ("caution" as string),
     description_en: input?.description_en ?? "",
     description_th: input?.description_th ?? "",
@@ -179,6 +188,12 @@ export function AlertZoneForm({
               onChange={(e) => update("name", e.target.value)}
             />
           </FormField>
+
+          <OptionalNameFields
+            values={values}
+            errors={fieldErrors}
+            onChange={(field: NameLanguageField, value) => update(field, value)}
+          />
 
           <FormField
             label="Risk level"

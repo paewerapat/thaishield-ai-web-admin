@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { ImageOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
+import {
+  OptionalNameFields,
+  type NameLanguageField,
+} from "@/components/admin/optional-name-fields";
 import { PointMapPicker } from "@/components/admin/point-map-picker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +34,11 @@ import {
 const EMPTY = {
   id: "",
   name: "",
+  name_th: "",
+  name_zh: "",
+  name_ko: "",
+  name_ru: "",
+  name_ja: "",
   lat: "",
   lng: "",
   type: "hotel" as string,
@@ -46,6 +55,11 @@ function toFieldValues(input?: PartnerLocationInput): FieldValues {
   return {
     id: input.id,
     name: input.name,
+    name_th: input.name_th ?? "",
+    name_zh: input.name_zh ?? "",
+    name_ko: input.name_ko ?? "",
+    name_ru: input.name_ru ?? "",
+    name_ja: input.name_ja ?? "",
     lat: String(input.lat),
     lng: String(input.lng),
     type: input.type,
@@ -184,6 +198,14 @@ export function PartnerLocationForm({
               onChange={(e) => updateField("name", e.target.value)}
             />
           </FormField>
+
+          <OptionalNameFields
+            values={values}
+            errors={fieldErrors}
+            onChange={(field: NameLanguageField, value) =>
+              updateField(field, value)
+            }
+          />
 
           <FormField label="Type" htmlFor="type" error={fieldErrors.type}>
             <Select
