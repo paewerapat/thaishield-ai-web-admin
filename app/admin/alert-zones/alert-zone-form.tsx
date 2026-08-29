@@ -27,6 +27,24 @@ import {
   type AlertZoneInput,
 } from "@/lib/schemas/alert-zones";
 
+/**
+ * All six, in the order the app's own language picker lists them. Required,
+ * not optional: the app offers these six as equals, so an advisory that exists
+ * only in English leaves four of them reading a language they may not have.
+ *
+ * 🚨 Zones written before 2026-08-29 carry only English and Thai. Opening one
+ * now and saving it will fail until the four new boxes are filled — deliberate,
+ * but it lands on whoever edits an old zone next, not on whoever added this.
+ */
+const DESCRIPTION_LANGUAGES = [
+  { field: "description_th", label: "Thai" },
+  { field: "description_en", label: "English" },
+  { field: "description_zh", label: "Chinese (中文)" },
+  { field: "description_ko", label: "Korean (한국어)" },
+  { field: "description_ru", label: "Russian (Русский)" },
+  { field: "description_ja", label: "Japanese (日本語)" },
+] as const;
+
 function toFieldValues(input?: AlertZoneInput) {
   return {
     id: input?.id ?? "",
@@ -34,6 +52,10 @@ function toFieldValues(input?: AlertZoneInput) {
     risk_level: input?.risk_level ?? ("caution" as string),
     description_en: input?.description_en ?? "",
     description_th: input?.description_th ?? "",
+    description_zh: input?.description_zh ?? "",
+    description_ko: input?.description_ko ?? "",
+    description_ru: input?.description_ru ?? "",
+    description_ja: input?.description_ja ?? "",
     polygon: input?.polygon ?? [],
   };
 }
@@ -191,33 +213,22 @@ export function AlertZoneForm({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FormField
-            label="English"
-            htmlFor="description_en"
-            error={fieldErrors.description_en}
-          >
-            <Textarea
-              id="description_en"
-              rows={3}
-              value={values.description_en}
-              onChange={(e) => update("description_en", e.target.value)}
-            />
-            <WordingHint text={values.description_en} />
-          </FormField>
-
-          <FormField
-            label="Thai"
-            htmlFor="description_th"
-            error={fieldErrors.description_th}
-          >
-            <Textarea
-              id="description_th"
-              rows={3}
-              value={values.description_th}
-              onChange={(e) => update("description_th", e.target.value)}
-            />
-            <WordingHint text={values.description_th} />
-          </FormField>
+          {DESCRIPTION_LANGUAGES.map(({ field, label }) => (
+            <FormField
+              key={field}
+              label={label}
+              htmlFor={field}
+              error={fieldErrors[field]}
+            >
+              <Textarea
+                id={field}
+                rows={3}
+                value={values[field]}
+                onChange={(e) => update(field, e.target.value)}
+              />
+              <WordingHint text={values[field]} />
+            </FormField>
+          ))}
         </CardContent>
       </Card>
 

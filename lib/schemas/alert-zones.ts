@@ -49,8 +49,22 @@ export const alertZoneInputSchema = z
     risk_level: z.enum(ALERT_ZONE_RISK_LEVELS, {
       error: `Risk level must be one of: ${ALERT_ZONE_RISK_LEVELS.join(", ")}`,
     }),
+    // All six, all required. The app offers six languages as equals on its
+    // first screen, so a Korean tourist who picks Korean and then meets an
+    // English advisory was sold something the app does not deliver — and this
+    // text is the app describing a real place, which is the most consequential
+    // string it shows.
+    //
+    // 🚨 Required, not optional, and that has a cost: zones written before
+    // 2026-08-29 have only en/th, so opening one and saving it now fails until
+    // the four new boxes are filled. That pressure is the point, but it is felt
+    // by staff on their next edit, not by whoever added this field.
     description_en: z.string().trim().min(1, "English description is required"),
     description_th: z.string().trim().min(1, "Thai description is required"),
+    description_zh: z.string().trim().min(1, "Chinese description is required"),
+    description_ko: z.string().trim().min(1, "Korean description is required"),
+    description_ru: z.string().trim().min(1, "Russian description is required"),
+    description_ja: z.string().trim().min(1, "Japanese description is required"),
   })
   .superRefine((data, ctx) => {
     const enIssue = wordingIssueMessage(data.description_en);
@@ -68,6 +82,23 @@ export const alertZoneInputSchema = z
         path: ["description_th"],
         message: thIssue,
       });
+    }
+    // The other four go through the same check even though it only recognises
+    // English terms. It costs nothing, and it catches the common case of a
+    // translator leaving an English phrase in place — "tourist trap" pasted
+    // into the Japanese box is exactly as actionable there as in the English
+    // one. It is not a substitute for the human review those columns still
+    // need.
+    for (const [field, value] of [
+      ["description_zh", data.description_zh],
+      ["description_ko", data.description_ko],
+      ["description_ru", data.description_ru],
+      ["description_ja", data.description_ja],
+    ] as const) {
+      const issue = wordingIssueMessage(value);
+      if (issue) {
+        ctx.addIssue({code: "custom", path: [field], message: issue});
+      }
     }
   });
 

@@ -201,6 +201,10 @@ const zoneInput = (overrides: Record<string, unknown> = {}) => ({
   risk_level: "caution",
   description_en: "Prices in this area vary more than the city average.",
   description_th: "ราคาบริเวณนี้แตกต่างจากค่าเฉลี่ยของเมืองมากกว่าปกติ",
+  description_zh: "此区域的价格可能高于平均水平，购买前请先比较价格。",
+  description_ko: "이 지역의 가격은 평균보다 높을 수 있습니다. 구매 전 가격을 비교해 보세요.",
+  description_ru: "Цены в этом районе могут быть выше средних. Сравните цены перед покупкой.",
+  description_ja: "このエリアの価格は平均より高い場合があります。購入前に価格をご確認ください。",
   ...overrides,
 });
 

@@ -1,4 +1,5 @@
 import { Check, Circle, Clock } from "lucide-react";
+import { DesignInventory } from "./design-inventory";
 import { PageHeader } from "@/components/admin/page-header";
 import {
   Card,
@@ -169,6 +170,13 @@ export default function ProgressPage() {
             </Card>
           );
         })}
+      </div>
+
+      {/* The phase list above answers "how far along are we". This answers
+          "the poster showed X, where is it" — a different question, and one
+          that otherwise costs a meeting to answer. */}
+      <div className="mt-10">
+        <DesignInventory />
       </div>
 
       <Card className="mt-6 border-warning/40 bg-warning/5">

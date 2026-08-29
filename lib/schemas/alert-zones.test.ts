@@ -14,6 +14,10 @@ function validInput(overrides: Partial<Record<string, unknown>> = {}) {
     description_en:
       "Prices in this area may be higher than average. Compare before purchasing.",
     description_th: "ราคาในพื้นที่นี้อาจสูงกว่าค่าเฉลี่ย โปรดเปรียบเทียบราคาก่อนตัดสินใจ",
+    description_zh: "此区域的价格可能高于平均水平，购买前请先比较价格。",
+    description_ko: "이 지역의 가격은 평균보다 높을 수 있습니다. 구매 전 가격을 비교해 보세요.",
+    description_ru: "Цены в этом районе могут быть выше средних. Сравните цены перед покупкой.",
+    description_ja: "このエリアの価格は平均より高い場合があります。購入前に価格をご確認ください。",
     ...overrides,
   };
 }
@@ -90,5 +94,39 @@ describe("alertZoneInputSchema", () => {
     expect(
       alertZoneInputSchema.safeParse(validInput({ id: "Zone 2" })).success,
     ).toBe(false);
+  });
+});
+
+describe("advisory text exists in every language the app offers", () => {
+  // The app's first screen offers six languages as equals. An advisory that
+  // exists only in English leaves four of those readers with text they may not
+  // read, on the one string that describes a real place. Optional would mean
+  // empty, and empty would mean English forever.
+  const LANGUAGES = ["en", "th", "zh", "ko", "ru", "ja"] as const;
+
+  for (const lang of LANGUAGES) {
+    it(`rejects a zone with no ${lang} description`, () => {
+      const input = validInput();
+      delete (input as Record<string, unknown>)[`description_${lang}`];
+      const result = alertZoneInputSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+
+    it(`rejects a ${lang} description that is only whitespace`, () => {
+      const result = alertZoneInputSchema.safeParse(
+        validInput({ [`description_${lang}`]: "   " }),
+      );
+      expect(result.success).toBe(false);
+    });
+  }
+
+  it("still catches an English banned term left inside a translation", () => {
+    // The commonest real failure is not a missing box, it is a translator
+    // leaving a phrase untranslated. "tourist trap" sitting in the Japanese
+    // field is exactly as actionable there as in the English one.
+    const result = alertZoneInputSchema.safeParse(
+      validInput({ description_ja: "ここは tourist trap です" }),
+    );
+    expect(result.success).toBe(false);
   });
 });

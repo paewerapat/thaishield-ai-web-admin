@@ -19,6 +19,14 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
     risk_level: data.risk_level,
     description_en: data.description_en,
     description_th: data.description_th,
+    // Zones written before 2026-08-29 have no value in these four. They read
+    // back as empty strings so the form can open them at all; saving then
+    // requires filling them, which is the intended nudge. The app falls back
+    // to English meanwhile, so nothing on the map goes blank in the interim.
+    description_zh: data.description_zh ?? "",
+    description_ko: data.description_ko ?? "",
+    description_ru: data.description_ru ?? "",
+    description_ja: data.description_ja ?? "",
     polygon: polygon.map((p) => ({ lat: p.latitude, lng: p.longitude })),
     center_lat: data.center_lat,
     center_lng: data.center_lng,
