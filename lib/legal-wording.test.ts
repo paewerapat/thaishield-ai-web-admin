@@ -82,3 +82,41 @@ describe("hasWordingViolations", () => {
     expect(hasWordingViolations("Avoid this shop.")).toBe(true);
   });
 });
+
+describe("the published Thai legal pages do not deny what the app sells", () => {
+  // 🚨 This exists because the same defect shipped three times.
+  //
+  // The Thai privacy policy used สมาชิก to mean "user account" — but สมัครสมาชิก
+  // is exactly the app paywall's word for Subscribe. So the published page both
+  // sold an auto-renewing สมาชิก and flatly denied having one. It was fixed in
+  // §2 and reappeared in §7 three sections down, because the fix changed the
+  // lines it was pointed at instead of scanning the file.
+  //
+  // A regex is the right tool here precisely because a human reading the diff
+  // is what failed. Both files are public, and one of them states billing terms
+  // a customer can hold the operator to.
+  const PAGES = ["../app/privacy/page.tsx", "../app/terms/page.tsx"];
+
+  // Phrasings that deny the app has a subscription. The word means "member" and
+  // "subscriber" alike in Thai, so use บัญชีผู้ใช้ when the point is accounts.
+  const DENIALS = [
+    "ไม่มีระบบสมาชิก",
+    "ไม่มีการสมัครสมาชิก",
+    "ไม่ได้เป็นสมาชิก",
+    "ไม่มีสมาชิก",
+  ];
+
+  it.each(PAGES)("%s never denies having สมาชิก", async (page) => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const source = readFileSync(join(__dirname, page), "utf8");
+
+    for (const denial of DENIALS) {
+      expect(
+        source.includes(denial),
+        `"${denial}" contradicts the subscription this page sells. ` +
+          `If the point is that there are no user accounts, say บัญชีผู้ใช้.`,
+      ).toBe(false);
+    }
+  });
+});
