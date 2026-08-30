@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     "How the ThaiShield AI mobile app handles location, camera, microphone and purchase data.",
 };
 
-const LAST_UPDATED = "22 สิงหาคม 2026 / 22 August 2026";
+const LAST_UPDATED = "30 สิงหาคม 2026 / 30 August 2026";
 const CONTACT_EMAIL = "support@thaishieldapp.com";
 
 export default function PrivacyPolicyPage() {
@@ -194,9 +194,15 @@ function ThaiPolicy() {
           เราไม่เห็นและไม่เก็บเลขบัตรหรือข้อมูลการชำระเงินของคุณ
         </p>
         <p>
-          เมื่อคุณซื้อแพ็กเกจ เราบันทึกเพียง{" "}
-          <strong>รหัสรายการซื้อที่ร้านค้าออกให้ ประเภทแพ็กเกจ และวันหมดอายุ</strong>{" "}
-          เพื่อให้คุณกู้คืนสิทธิ์ที่เหลืออยู่ได้เมื่อเปลี่ยนเครื่องหรือติดตั้งแอปใหม่
+          Premium จำหน่ายเป็น <strong>สมาชิกแบบต่ออายุอัตโนมัติ</strong>{" "}
+          ทั้งแบบรายสัปดาห์และรายเดือน ร้านค้าจะเรียกเก็บเงินผ่านบัญชี Google Play
+          หรือ Apple ID ของคุณ และต่ออายุให้อัตโนมัติจนกว่าคุณจะยกเลิก
+          การยกเลิกทำที่หน้าตั้งค่าการสมัครสมาชิกของร้านค้า ไม่ได้ทำในแอปนี้
+        </p>
+        <p>
+          เมื่อคุณสมัครสมาชิก เราบันทึกเพียง{" "}
+          <strong>รหัสรายการซื้อที่ร้านค้าออกให้ ประเภทแพ็กเกจ และวันสิ้นสุดรอบปัจจุบัน</strong>{" "}
+          เพื่อให้แอปแสดงสถานะได้ถูกต้องก่อนที่ร้านค้าจะตอบกลับ
           ข้อมูลชุดนี้ไม่มีชื่อ อีเมล หรือสิ่งใดที่ระบุตัวคุณได้
         </p>
       </Section>
@@ -340,14 +346,20 @@ function EnglishPolicy() {
           or store your card or payment details.
         </p>
         <p>
-          When you buy a pass we record only{" "}
+          Premium is sold as an <strong>auto-renewing subscription</strong>,
+          weekly or monthly. The store charges your Google Play or Apple ID
+          account, renews it automatically until you cancel, and handles
+          cancellation in its own subscription settings — not in the app.
+        </p>
+        <p>
+          When you subscribe we record only{" "}
           <strong>
-            the transaction id issued by the store, which pass it was, and when
-            it expires
+            the transaction id issued by the store, which plan it was, and the
+            end of the current period
           </strong>
-          , so that the time remaining can be restored if you change phone or
-          reinstall. That record contains no name, no email, and nothing that
-          identifies you.
+          , so the app can show the right state before the store has answered.
+          That record contains no name, no email, and nothing that identifies
+          you.
         </p>
       </Section>
 

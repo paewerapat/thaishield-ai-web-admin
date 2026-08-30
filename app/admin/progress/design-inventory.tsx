@@ -122,19 +122,19 @@ const GROUPS: Group[] = [
       {
         name: "฿99 monthly",
         state: "changed",
-        note: "Replaced by a $10 30-day pass, at the client’s request on 22 Aug.",
+        note: "Now a $10 auto-renewing monthly subscription, sold beside a $3.50 weekly one. It became a one-time 30-day pass on 22 Aug and went back to a subscription on 30 Aug, at the client’s request both times. The short plan is weekly rather than a fortnight because neither store sells a 14-day billing period.",
       },
       { name: "฿799 yearly", state: "dropped", note: "Cancelled by the client." },
       { name: "฿1,999 lifetime", state: "dropped", note: "Cancelled by the client." },
       {
         name: "7-day free trial",
         state: "changed",
-        note: "Now 3 days, at the client’s request.",
+        note: "Now 3 days, at the client’s request. Granted by the app for the moment; once payments are live it moves to the store’s own introductory offer, which a subscription can carry and a one-time pass could not.",
       },
       {
         name: "“Cancel anytime”",
-        state: "dropped",
-        note: "Does not apply. Both passes are a single payment with no renewal, so there is nothing to cancel — and printing it would imply a recurring charge that does not exist. The plans screen says so directly instead.",
+        state: "shipped",
+        note: "True as of 30 Aug. Both plans became auto-renewing subscriptions, so there is a renewal to cancel — done in the store’s subscription settings, not in the app. Between 22 and 30 Aug this was marked as not applicable, because one-time passes have nothing to cancel.",
       },
     ],
   },
@@ -191,6 +191,16 @@ export function DesignInventory() {
           The poster arrived after the quotation and was never part of it, so
           each feature on it was decided one at a time. This is that record —
           what was built, what was deliberately not, and why.
+        </p>
+        <p className="mt-2 max-w-[68ch] text-sm text-muted-foreground">
+          <strong className="text-foreground">
+            Updated 30 August: the plans are subscriptions again.
+          </strong>{" "}
+          Weekly at $3.50 and monthly at $10, both auto-renewing and cancellable
+          in the store. They were one-time passes between 22 and 30 August. Two
+          things follow: “cancel anytime” from the poster is now accurate rather
+          than impossible, and restoring a purchase works on iPhone as well as
+          Android, which it could not while they were one-time passes.
         </p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           {(
