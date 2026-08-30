@@ -131,7 +131,7 @@ export default function ProgressPage() {
     <>
       <PageHeader
         title="Project Progress"
-        description="Status of each phase. Last updated 28 August 2026."
+        description="Status of each phase. Last updated 30 August 2026."
       />
 
       <div className="space-y-4">
