@@ -1,5 +1,6 @@
 import { Check, Circle, Clock } from "lucide-react";
 import { DesignInventory } from "./design-inventory";
+import { ExtraWork } from "./extra-work";
 import { PageHeader } from "@/components/admin/page-header";
 import {
   Card,
@@ -79,12 +80,25 @@ const PHASES: Phase[] = [
   {
     name: "Phase 2C — Payments and store release",
     status: "active",
-    summary: "In progress — the last phase before going live.",
+    summary:
+      "In progress — the last phase before going live. Two of its three tasks were brought forward and are already partly or wholly done.",
     items: [
-      { label: "Wording review across all six languages", done: false },
+      {
+        label:
+          "Wording review across all six languages — done. Every string is now checked automatically, in all six, on every build",
+        done: true,
+      },
+      {
+        label:
+          "Testing groundwork — done. 175 automated checks and a four-angle review that runs before anything is called finished",
+        done: true,
+      },
       { label: "Google Play and App Store payment integration", done: false },
       { label: "Restore purchases for users who change device", done: false },
-      { label: "Full regression test and store build", done: false },
+      {
+        label: "Full regression test on Scanner and SOS, and the store build",
+        done: false,
+      },
       { label: "iPhone testing", done: false },
     ],
   },
@@ -171,6 +185,8 @@ export default function ProgressPage() {
           );
         })}
       </div>
+
+      <ExtraWork />
 
       {/* The phase list above answers "how far along are we". This answers
           "the poster showed X, where is it" — a different question, and one
