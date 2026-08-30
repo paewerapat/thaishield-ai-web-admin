@@ -91,10 +91,19 @@ set server-side on every write (never trust a client-supplied timestamp).
 ```
 {
   id:           string,
-  name:         string,
+  name:         string,        // the canonical name, always present
+  // Optional official names, added 2026-08-29. Empty is the normal case —
+  // fill one only where the business genuinely has a name in that language.
+  name_th:      string,
+  name_zh:      string,
+  name_ko:      string,
+  name_ru:      string,
+  name_ja:      string,
   lat:          number,
   lng:          number,
-  type:         string,        // "restaurant" | "hotel" | "transport"
+  // ⚠️ Eleven values since Phase 2A, not three. The full list lives in
+  // lib/schemas/partner-locations.ts and must match the Flutter enum.
+  type:         string,        // see PARTNER_LOCATION_TYPES
   rating:       number,        // 0.0 - 5.0
   is_verified:  boolean,
   price_tier:   string,        // "fair" | "caution" | "high"
@@ -121,8 +130,24 @@ shopping, attraction, tourist_info`. They live in `PARTNER_LOCATION_TYPES`
   radius_km:      number,
   polygon:        array<GeoPoint>,  // area boundary points for map overlay
   risk_level:     string,      // "safe" | "caution" | "danger"
+  // All six REQUIRED since 2026-08-29. Saving an older zone fails until the
+  // four newer ones are filled — deliberate, and felt by whoever edits an old
+  // zone next rather than by whoever added the fields.
   description_en: string,
-  description_th: string
+  description_th: string,
+  description_zh: string,
+  description_ko: string,
+  description_ru: string,
+  description_ja: string,
+  // Optional official names, unlike the descriptions. Empty is the normal
+  // case: most places have no name in Korean or Russian, and requiring six
+  // would produce the English pasted five times or an invented name for a
+  // real place. `name` above carries every case these do not.
+  name_th:        string,
+  name_zh:        string,
+  name_ko:        string,
+  name_ru:        string,
+  name_ja:        string
 }
 ```
 Admin screen: this is the highest-effort item (2,500 THB) — an **interactive polygon editor**
