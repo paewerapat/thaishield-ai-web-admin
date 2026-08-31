@@ -56,12 +56,16 @@ const GROUPS: Group[] = [
       { name: "Category filter", state: "shipped" },
       {
         name: "Category icon row across the top",
-        state: "pending",
-        note: "Approved 30 August, not started, not yet priced — outside the original quotation. One of the most visible things on this poster that the app does not have.",
+        state: "new",
+        note: "Built 31 August. Eight shortcuts across the top of the map — all, five categories, and more — with the category icons, in all six languages. One point to confirm: the row is free while the filter panel beside it stays a paid feature. The row narrows the map to one category; the panel does several at once plus the three area toggles, which is the part being sold. Say if you would rather the row were paid too.",
       },
       { name: "Coloured area overlays", state: "shipped" },
       { name: "Blue dot and 1 km ring", state: "shipped" },
-      { name: "Place pins with labels", state: "shipped" },
+      {
+        name: "Place pins with labels",
+        state: "shipped",
+        note: "Updated 31 August: each pin now carries its category icon — a fork for restaurants, a cross for hospitals, a train for transport — instead of eleven identical teardrops in different colours. Partner businesses stay one blue, as you asked on 29 August.",
+      },
       { name: "Map layers and locate buttons", state: "shipped" },
       {
         name: "AI Local Insights summary card",
