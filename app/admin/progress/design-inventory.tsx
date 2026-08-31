@@ -38,7 +38,11 @@ const GROUPS: Group[] = [
     title: "Map header",
     items: [
       { name: "Zone legend — safe, caution, alert, partner", state: "shipped" },
-      { name: "Premium card and link to the plans screen", state: "shipped" },
+      {
+        name: "Premium card and link to the plans screen",
+        state: "shipped",
+        note: "Corrected 31 August. It was recorded as built because the plans screen itself was built — but the only way in sat in Profile, and it was hidden whenever access was active. Since every new install starts a 3-day trial, nobody could reach the plans screen during their first three days. There is now a View plans button on the map header, where this poster puts it, and it stays visible whether or not you are subscribed.",
+      },
     ],
   },
   {
@@ -47,13 +51,13 @@ const GROUPS: Group[] = [
       {
         name: "Place search",
         state: "partial",
-        note: "Searches addresses, not place names. Malls and restaurants often will not be found — needs Google Places, which was left out of this phase.",
+        note: "Searches addresses, not place names, so malls and restaurants often will not be found. Fixing it needs Google Places — approved 30 August, not started, not yet priced, and outside the original quotation.",
       },
       { name: "Category filter", state: "shipped" },
       {
         name: "Category icon row across the top",
-        state: "dropped",
-        note: "Left out of this phase. The filter panel covers the same ground.",
+        state: "pending",
+        note: "Approved 30 August, not started, not yet priced — outside the original quotation. One of the most visible things on this poster that the app does not have.",
       },
       { name: "Coloured area overlays", state: "shipped" },
       { name: "Blue dot and 1 km ring", state: "shipped" },
@@ -89,8 +93,8 @@ const GROUPS: Group[] = [
     items: [
       {
         name: "“What’s around you?” — five photo cards",
-        state: "dropped",
-        note: "Left out of this phase. Needs a new photo field in this admin as well as the screen.",
+        state: "pending",
+        note: "Approved 30 August, not started, not yet priced — outside the original quotation. Needs a new photo field in this admin as well as the screen. The whole strip is absent from the app today.",
       },
     ],
   },
