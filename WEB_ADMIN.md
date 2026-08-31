@@ -406,9 +406,24 @@ firebase apphosting:secrets:grantaccess googleMapsApiKey --backend <backend-id>
 ### 10.3 Deploy
 
 ```bash
-npm run build      # sanity-check locally first
+npm run build      # 🚨 NOT optional — see below
+npm test
 git push origin main
 ```
+
+🚨 **`npm run build` is the only check that runs Next's ESLint rules, and a
+failure there means the push silently does nothing.**
+
+On 2026-08-31 a test file used `module` as a `for...of` variable. Next forbids
+binding that name anywhere in the project (`@next/next/no-assign-module-variable`)
+and treats it as a build error. `tsc --noEmit` passed, all 150 vitest tests
+passed, the push succeeded — and the App Hosting build failed, so no rollout
+happened and the change simply was not live. Nothing announced it: `git push`
+reported success, and the site kept serving the previous version. It surfaced
+only because someone went looking for the feature and could not find it.
+
+A file that never ships can still break the build. Run the build.
+
 Pushing to the connected branch triggers a rollout automatically. To deploy without a new
 commit:
 ```bash

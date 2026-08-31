@@ -40,10 +40,15 @@ describe("the admin nav", () => {
   });
 
   it("gives every entry a label, a description and an icon", () => {
-    for (const module of ADMIN_MODULES) {
-      expect(module.label.trim(), module.href).not.toBe("");
-      expect(module.description.trim(), module.href).not.toBe("");
-      expect(module.icon, module.href).toBeDefined();
+    // 🚨 Not `module` as the loop variable. Next's ESLint config forbids
+    // binding that name anywhere under the project (it is the CommonJS
+    // global), and `next build` treats it as an error — so a test file that
+    // never ships broke the production build and, with it, the App Hosting
+    // rollout. `tsc --noEmit` and vitest both passed; neither runs Next's lint.
+    for (const entry of ADMIN_MODULES) {
+      expect(entry.label.trim(), entry.href).not.toBe("");
+      expect(entry.description.trim(), entry.href).not.toBe("");
+      expect(entry.icon, entry.href).toBeDefined();
     }
   });
 });
