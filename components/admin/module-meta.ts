@@ -1,9 +1,11 @@
 import {
   BookOpen,
+  FileText,
   LayoutDashboard,
   ListChecks,
   MapPin,
   ShieldAlert,
+  ShieldCheck,
   Tags,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +26,18 @@ export interface AdminModule {
    * meant to answer "what can I change from here".
    */
   isReference?: boolean;
+  /**
+   * Lives outside `/admin` and opens in a new tab.
+   *
+   * 🚨 The two legal pages are public **on purpose** — auth is enforced in
+   * `app/admin/layout.tsx`, not middleware, so anything outside `/admin` needs
+   * no login, and a store reviewer has to be able to read them without an
+   * account (see the header comment in `app/terms/page.tsx`). Linking to them
+   * from the sidebar as ordinary nav items would walk a signed-in staff member
+   * straight out of the admin with no way back except the browser's Back
+   * button, so they open in a new tab instead.
+   */
+  isExternal?: boolean;
 }
 
 export const ADMIN_MODULES: AdminModule[] = [
@@ -68,13 +82,29 @@ export const ADMIN_MODULES: AdminModule[] = [
     icon: ListChecks,
     isReference: true,
   },
+  {
+    href: "/terms",
+    label: "Terms of Use",
+    description:
+      "The public subscription terms the app's purchase screen links to.",
+    icon: FileText,
+    isExternal: true,
+  },
+  {
+    href: "/privacy",
+    label: "Privacy Policy",
+    description: "The public privacy policy both app stores require.",
+    icon: ShieldCheck,
+    isExternal: true,
+  },
 ];
 
 /**
- * The dashboard's cards: what a staff member can actually edit. Reference
- * pages are deliberately left out — a card promising "Project progress" beside
- * three content editors reads as a fourth thing to fill in.
+ * The dashboard's cards: what a staff member can actually edit. Reference and
+ * external pages are deliberately left out — a card promising "Project
+ * progress" beside three content editors reads as a fourth thing to fill in,
+ * and the legal pages are read-only documents that live outside this admin.
  */
 export const CONTENT_MODULES = ADMIN_MODULES.filter(
-  (m) => m.href !== "/admin" && !m.isReference,
+  (m) => m.href !== "/admin" && !m.isReference && !m.isExternal,
 );

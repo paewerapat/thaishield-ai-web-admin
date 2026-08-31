@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { ADMIN_MODULES } from "@/components/admin/module-meta";
 import { cn } from "@/lib/utils";
 
@@ -33,15 +34,24 @@ export function AdminNav({
         // Exact match for the dashboard, prefix match elsewhere, so that
         // /admin/price-standards/new still highlights "Price Standards"
         // without also lighting up "Dashboard" on every page.
+        // An external page is never the current page — it opens in its own
+        // tab and the admin stays where it was.
         const isActive =
-          module.href === "/admin"
-            ? pathname === "/admin"
-            : pathname.startsWith(module.href);
+          module.isExternal
+            ? false
+            : module.href === "/admin"
+              ? pathname === "/admin"
+              : pathname.startsWith(module.href);
 
         return (
           <Link
             key={module.href}
             href={module.href}
+            // 🚨 The legal pages live outside /admin, where there is no auth
+            // and no sidebar. Opening them in this tab would drop a signed-in
+            // staff member onto a public page with no way back.
+            target={module.isExternal ? "_blank" : undefined}
+            rel={module.isExternal ? "noopener noreferrer" : undefined}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
@@ -53,6 +63,12 @@ export function AdminNav({
           >
             <Icon className="size-4 shrink-0" aria-hidden />
             {module.label}
+            {module.isExternal && (
+              <ExternalLink
+                className="size-3 shrink-0 opacity-60"
+                aria-label="opens in a new tab"
+              />
+            )}
           </Link>
         );
       })}
