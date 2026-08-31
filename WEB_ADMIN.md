@@ -162,6 +162,43 @@ Section 5 before save (see 1.5 / QA below).
 Written only by the Flutter app's `syncTravelAlerts` Cloud Function via the Admin SDK. Not
 in the Phase 1 quotation scope; leave it out of the admin UI entirely.
 
+## 3.9 🚨 What a read may return: plain data only
+
+**Every `fromFirestore` must build its object field by field. Never return
+`{ ...doc.data(), id }`.**
+
+Each edit page is a Server Component that hands its item straight to a
+`"use client"` form. React can only carry plain objects, arrays and primitives
+across that boundary — a class instance throws *at render time*, which means
+the whole page dies, not one field.
+
+Firestore hands back two classes routinely:
+
+| Type | Where it appears |
+|---|---|
+| `Timestamp` | `price_standards.updated_at` — the only timestamp in any of the three collections |
+| `GeoPoint` | `alert_zones.polygon` — already converted to `{ lat, lng }` |
+
+**This shipped on 2026-08-30 and broke Edit for every price standard.**
+`fromFirestore` spread the raw document, `updated_at` came back as a
+`Timestamp`, and the page threw for all 61 rows. Three things made it hard to
+see:
+
+1. `tsc --noEmit` was clean. The form's prop is typed `PriceStandardInput`,
+   `PriceStandard` extends it, and TypeScript allows the extra property when a
+   variable is passed rather than an object literal.
+2. The edit page's `try/catch` around the fetch did **not** catch it — the
+   throw happens later, during render. A tidy `DataErrorNotice` means the
+   *fetch* failed; a blown-up page means something crossed the boundary.
+3. Nothing displays `updated_at`, so no test missed it.
+
+`price_standards` no longer carries `updated_at` in its read model at all. The
+field still exists in Firestore and both write paths still stamp it — this is
+about what leaves the server, not what is stored.
+
+`crud-flow.test.ts` asserts all three collections return only plain objects.
+Do not delete those tests to make a change pass.
+
 ## 4. Auth & Firestore Access Strategy
 
 - **Login: Google Sign-In only** (Firebase Auth `GoogleAuthProvider`) — no email/password,

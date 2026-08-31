@@ -35,6 +35,15 @@ function fromFirestore(
   // The optional name fields arrived after most rows were written, so a spread
   // alone would hand the form `undefined` while the type promises a string.
   // Defaults first, document second, id last.
+  //
+  // 🚨 The spread is safe only while this collection stores nothing but
+  // primitives. Everything returned here crosses into a Client Component, and
+  // React refuses class instances — a Firestore `Timestamp` or `GeoPoint`
+  // would throw for every row, with types and build both clean. That is
+  // exactly what happened to price_standards on 2026-08-31. If this collection
+  // ever gains `updated_at` or a GeoPoint, build the object field by field
+  // like price-standards and alert-zones do. `crud-flow.test.ts` fails if it
+  // does not.
   return {
     name_th: "",
     name_zh: "",

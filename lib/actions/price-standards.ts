@@ -25,7 +25,42 @@ function fromFirestore(
   id: string,
   data: FirebaseFirestore.DocumentData,
 ): PriceStandard {
-  return { ...data, id } as PriceStandard;
+  // 🚨 Build this explicitly. Do not go back to `{ ...data, id }`.
+  //
+  // Everything returned here is handed to `<PriceStandardForm>`, which is a
+  // Client Component, and React can only carry plain objects across that
+  // boundary. `price_standards` is the only one of the three collections that
+  // stores `updated_at`, and it reads back as a Firestore `Timestamp` — a
+  // class. Spreading the raw document put that class on the props and threw
+  // "Only plain objects can be passed to Client Components" for every row, so
+  // the edit page failed to open at all.
+  //
+  // The type system could not see it: the form's prop is typed
+  // `PriceStandardInput`, `PriceStandard` extends it, and TypeScript permits
+  // the extra property when a variable is passed rather than an object
+  // literal. `tsc --noEmit` was clean the whole time.
+  //
+  // `updated_at` is write-only — nothing in the CMS displays it and both write
+  // paths re-stamp it from the server — so it simply does not belong in the
+  // read model. Mirrors alert-zones, which builds its object field by field
+  // and never had this problem.
+  const item: PriceStandard = {
+    id,
+    name_en: data.name_en,
+    name_th: data.name_th,
+    name_zh: data.name_zh,
+    name_ko: data.name_ko,
+    name_ru: data.name_ru,
+    name_ja: data.name_ja,
+    min_price: data.min_price,
+    max_price: data.max_price,
+    category: data.category,
+  };
+
+  // Carried so the update path can write it back; see updatePriceStandard.
+  if (typeof data.image_url === "string") item.image_url = data.image_url;
+
+  return item;
 }
 
 export async function listPriceStandards(): Promise<PriceStandard[]> {

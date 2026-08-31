@@ -47,8 +47,17 @@ export const priceStandardInputSchema = z
 
 export type PriceStandardInput = z.infer<typeof priceStandardInputSchema>;
 
+/**
+ * What the CMS reads back for one price standard.
+ *
+ * 🚨 Deliberately has no `updated_at`. The field exists in Firestore and both
+ * write paths stamp it, but it reads back as a Firestore `Timestamp` — a class
+ * instance — and every value here crosses into a Client Component, which React
+ * only allows plain objects to do. Declaring it here is what let
+ * `fromFirestore` spread the raw document and break the edit page for every
+ * row while `tsc` stayed clean. Nothing in the CMS displays it.
+ */
 export interface PriceStandard extends PriceStandardInput {
-  updated_at: unknown; // Firestore Timestamp, set server-side only
   /**
    * Reference photo shown behind the Flutter Scanner's result card. Not part
    * of `priceStandardInputSchema` — staff cannot set or clear it from the CMS

@@ -381,6 +381,114 @@ describe("price_standards CRUD", () => {
 
 // --- partner_locations ------------------------------------------------------
 
+/**
+ * Everything `getPriceStandard` and `listPriceStandards` return is handed
+ * straight to a Client Component — `<PriceStandardForm initial={item} />` in
+ * app/admin/price-standards/[id]/edit/page.tsx, which is "use client".
+ *
+ * React can only send plain objects, arrays and primitives across that
+ * boundary. A class instance throws at render time, and the thrown error is
+ * the whole page, not a field. `price_standards` is the one collection of the
+ * three that stores `updated_at`, so it is the one that can carry a Firestore
+ * `Timestamp` — a class — into the form.
+ *
+ * The type system cannot catch this: the form's prop is typed
+ * `PriceStandardInput`, `PriceStandard` extends it, and TypeScript allows the
+ * extra property when passing a variable rather than an object literal. So
+ * `tsc --noEmit` stays clean while the page throws for every row.
+ */
+function assertPlainForClientComponent(value: unknown, path = "$"): void {
+  if (value === null || typeof value !== "object") return;
+
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => assertPlainForClientComponent(v, `${path}[${i}]`));
+    return;
+  }
+
+  const proto = Object.getPrototypeOf(value);
+  expect(
+    proto === Object.prototype || proto === null,
+    `${path} is a ${value.constructor?.name ?? "non-plain object"}, which React ` +
+      `cannot pass to a Client Component — the edit page throws for every row`,
+  ).toBe(true);
+
+  for (const [k, v] of Object.entries(value)) {
+    assertPlainForClientComponent(v, `${path}.${k}`);
+  }
+}
+
+describe("price_standards reads survive the Server/Client boundary", () => {
+  beforeEach(async () => {
+    store = {};
+    await createPriceStandard({
+      id: "som_tam",
+      name_en: "Som Tam",
+      name_th: "ส้มตำ",
+      name_zh: "青木瓜沙拉",
+      name_ko: "쏨땀",
+      name_ru: "Сом Там",
+      name_ja: "ソムタム",
+      min_price: 40,
+      max_price: 80,
+      category: "food",
+    });
+  });
+
+  it("getPriceStandard returns nothing React would refuse to serialize", async () => {
+    const item = await getPriceStandard("som_tam");
+    expect(item).not.toBeNull();
+    assertPlainForClientComponent(item);
+  });
+
+  it("listPriceStandards returns nothing React would refuse to serialize", async () => {
+    assertPlainForClientComponent(await listPriceStandards());
+  });
+
+  it("does not leak the write-only updated_at into the form model", async () => {
+    // Nothing in the CMS displays it, and the update path re-stamps it from
+    // the server. Carrying it out of the read model is what put a Timestamp on
+    // the props in the first place.
+    const item = await getPriceStandard("som_tam");
+    expect(item).not.toHaveProperty("updated_at");
+  });
+
+  it("still stores updated_at in Firestore, which the app relies on", async () => {
+    // The field itself must stay — this is about the read model, not the write.
+    expect(store.price_standards!.som_tam!.updated_at).toBeInstanceOf(Timestamp);
+  });
+});
+
+describe("the other two collections cross the same boundary", () => {
+  // price_standards is where this actually broke, because it is the only one
+  // that stores a Timestamp. But partner_locations still returns
+  // `{ ...data, id }`, so the day anyone adds a timestamp or a GeoPoint to
+  // that collection the edit page breaks the same silent way — clean types,
+  // clean build, every row throwing. Guard all three, not just the one that
+  // was reported.
+
+  it("partner_locations reads are plain", async () => {
+    store = {};
+    expect(await savePartnerLocation(partnerForm(), "create")).toEqual({
+      ok: true,
+    });
+
+    assertPlainForClientComponent(await listPartnerLocations());
+    assertPlainForClientComponent(
+      await getPartnerLocation("zz_test_partner"),
+    );
+  });
+
+  it("alert_zones reads are plain, GeoPoints included", async () => {
+    store = {};
+    expect(await saveAlertZone(zoneInput(), "create")).toEqual({ ok: true });
+
+    // Zone polygons are stored as GeoPoint — a class — and fromFirestore
+    // already converts them to { lat, lng }. This pins that conversion as a
+    // serialization requirement, not just a shape preference.
+    assertPlainForClientComponent(await listAlertZones());
+  });
+});
+
 describe("partner_locations CRUD", () => {
   it("writes exactly the document shape PartnerLocation.fromFirestore reads", async () => {
     expect(await savePartnerLocation(partnerForm(), "create")).toEqual({
