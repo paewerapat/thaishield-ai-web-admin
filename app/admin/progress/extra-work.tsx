@@ -55,6 +55,11 @@ const DELIVERED_FREE = [
       "Requested on 30 August, after the plans had been rebuilt as one-time passes on 22 August. The purchase screen, the wording in six languages, the store setup instructions and the tests were all rewritten.",
   },
   {
+    title: "Usage and purchase reports",
+    detail:
+      "Requested on 1 September. Two new read-only pages: every app installation with the date it started using the app and whether Premium is active, and a log of every purchase attempt including the ones that failed. An email address cannot be shown — the app has no login, and neither store returns the buyer’s email — so each row is identified by a random per-installation code. The app’s privacy policy was rewritten in both languages to cover what is now recorded.",
+  },
+  {
     title: "This admin’s guide, status and feature pages",
     detail:
       "The user guide, this page, and the 30-feature record of the design poster.",

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ADMIN_MODULES, CONTENT_MODULES } from "./module-meta";
+import {
+  ADMIN_MODULES,
+  CONTENT_MODULES,
+  REPORTING_MODULES,
+} from "./module-meta";
 
 describe("the admin nav", () => {
   const byHref = (href: string) =>
@@ -37,6 +41,35 @@ describe("the admin nav", () => {
       "/admin/partner-locations",
       "/admin/alert-zones",
     ]);
+  });
+
+  it("offers both reporting pages", () => {
+    expect(byHref("/admin/app-users")?.isReadOnly).toBe(true);
+    expect(byHref("/admin/transactions")?.isReadOnly).toBe(true);
+    expect(REPORTING_MODULES.map((m) => m.href)).toEqual([
+      "/admin/app-users",
+      "/admin/transactions",
+    ]);
+  });
+
+  it("keeps the reporting pages off the dashboard's content cards", () => {
+    // Same reasoning as the legal pages. A read-only report sitting between
+    // three Firestore editors reads as a form somebody forgot to fill in, and
+    // its empty state reads as a bug rather than as "nobody has opened the app
+    // yet".
+    const hrefs = CONTENT_MODULES.map((m) => m.href);
+    expect(hrefs).not.toContain("/admin/app-users");
+    expect(hrefs).not.toContain("/admin/transactions");
+  });
+
+  it("keeps the reporting pages inside /admin, behind the login", () => {
+    // 🚨 Unlike /terms and /privacy, these must NOT be public. Auth is
+    // enforced in app/admin/layout.tsx, so a page moved outside /admin would
+    // publish every install id and every transaction to anyone with the URL.
+    for (const entry of REPORTING_MODULES) {
+      expect(entry.href.startsWith("/admin/")).toBe(true);
+      expect(entry.isExternal).toBeUndefined();
+    }
   });
 
   it("gives every entry a label, a description and an icon", () => {

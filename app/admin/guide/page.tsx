@@ -189,6 +189,59 @@ export default function GuidePage() {
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
+        The two report pages
+      </h2>
+
+      <Card>
+        <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-foreground">App Users</strong> and{" "}
+            <strong className="text-foreground">Transactions</strong> show what
+            the app has recorded. There is nothing to edit on either — no New,
+            no Edit, no Delete. They answer &ldquo;is anyone using this&rdquo;
+            and &ldquo;did that purchase go through&rdquo;.
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                One row is one installation of the app, not one person.
+              </strong>{" "}
+              The app has no login, so there is no email or name to show — and
+              neither Google Play nor the App Store gives us the buyer&rsquo;s
+              email either. A random per-install code is used instead. If
+              someone reinstalls the app or changes phone, they appear as a new
+              row. Please do not quote a number from these pages as a count of
+              customers.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                &ldquo;Premium&rdquo; and &ldquo;Trial&rdquo; are not the same
+                thing.
+              </strong>{" "}
+              Someone on the 3-day free trial has access and has paid nothing.
+              Only the Premium figure is money.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                For anything to do with a refund, check the store console.
+              </strong>{" "}
+              Transactions is the app&rsquo;s own record of what it tried to do,
+              which is what makes it useful when a user says they paid and got
+              nothing. Google Play Console and App Store Connect remain the
+              record of what was actually charged.
+            </span>
+          </p>
+        </CardContent>
+      </Card>
+
+      <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
         Before you save
       </h2>
 

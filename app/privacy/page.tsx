@@ -25,13 +25,27 @@ import Image from "next/image";
  * ## What the content is based on
  *
  * Every claim below was written against what the Flutter app actually does as
- * of 2026-08-22 — the permissions it requests, the services it calls, and the
- * one collection it writes. If a feature changes what leaves the device, this
+ * of 2026-09-01 — the permissions it requests, the services it calls, and the
+ * collections it writes. If a feature changes what leaves the device, this
  * page has to change with it. In particular:
  *
  *   - location is foreground-only (§7 forbids background/geofencing);
  *   - there is no account system, so there is no profile to hold;
- *   - `entitlements` stores a store transaction id and an expiry, nothing else.
+ *   - `entitlements` stores a store transaction id and an expiry, nothing else;
+ *   - `app_users` and `purchase_transactions` (added 2026-09-01, for the CMS's
+ *     reporting pages) store a **random per-install id** plus first/last-seen
+ *     dates, platform, app version, chosen language, and the outcome of each
+ *     purchase attempt.
+ *
+ * 🚨 **That last collection pair is why §3, §4, §5 and §7 changed on
+ * 2026-09-01, and it is the shape of change to watch for.** A reporting feature
+ * built for the admin is still data collection, and shipping one without
+ * amending this page would have made a published legal document false. The
+ * random id was chosen over a device identifier precisely so this amendment
+ * stays a disclosure rather than a new lawful-basis argument — the id is not
+ * derived from the handset and does not survive a reinstall. **Both stores'
+ * Data Safety declarations need the same amendment**, and that is on the
+ * client, not in this repo.
  *
  * The operator named here is the data controller under the PDPA and is the
  * client, not the developer. They should read this before it is published, and
@@ -44,7 +58,7 @@ export const metadata: Metadata = {
     "How the ThaiShield AI mobile app handles location, camera, microphone and purchase data.",
 };
 
-const LAST_UPDATED = "30 สิงหาคม 2026 / 30 August 2026";
+const LAST_UPDATED = "1 กันยายน 2026 / 1 September 2026";
 const CONTACT_EMAIL = "support@thaishieldapp.com";
 
 export default function PrivacyPolicyPage() {
@@ -186,8 +200,21 @@ function ThaiPolicy() {
               เราไม่เก็บไฟล์เสียงของคุณไว้ในระบบ
             </>,
             <>
-              <strong>ภาษาที่เลือก</strong> — เก็บไว้ในเครื่องของคุณเท่านั้น
-              เพื่อให้แอปจำภาษาที่คุณเลือกไว้
+              <strong>ภาษาที่เลือก</strong> — เก็บไว้ในเครื่องของคุณ
+              และส่งมาพร้อมข้อมูลการใช้งานตามข้อถัดไป
+              เพื่อให้เราทราบว่าควรดูแลภาษาใดเป็นหลัก
+            </>,
+            <>
+              <strong>รหัสประจำการติดตั้ง (Install ID) และข้อมูลการใช้งานพื้นฐาน</strong> —
+              เมื่อเปิดแอป เราบันทึกรหัสสุ่มที่แอปสร้างขึ้นเองประจำการติดตั้งนั้น
+              พร้อมกับวันที่เริ่มใช้งานครั้งแรก วันที่ใช้งานล่าสุด ระบบปฏิบัติการ
+              เวอร์ชันของแอป ภาษาที่เลือก และสถานะ Premium
+              เพื่อให้ผู้ดูแลระบบทราบจำนวนผู้ใช้งานและช่วยตรวจสอบปัญหาการซื้อได้{" "}
+              <strong>
+                รหัสนี้เป็นตัวเลขสุ่ม ไม่ได้มาจากหมายเลขเครื่อง หมายเลขโฆษณา หรือ IMEI
+                และไม่ผูกกับชื่อหรืออีเมลใด ๆ
+              </strong>{" "}
+              หากคุณลบแอปแล้วติดตั้งใหม่ จะได้รหัสใหม่และรหัสเดิมจะไม่เชื่อมโยงกับคุณอีก
             </>,
           ]}
         />
@@ -210,6 +237,15 @@ function ThaiPolicy() {
           เพื่อให้แอปแสดงสถานะได้ถูกต้องก่อนที่ร้านค้าจะตอบกลับ
           ข้อมูลชุดนี้ไม่มีชื่อ อีเมล หรือสิ่งใดที่ระบุตัวคุณได้
         </p>
+        <p>
+          นอกจากนี้ เราบันทึก{" "}
+          <strong>ผลของทุกครั้งที่มีการพยายามซื้อ</strong> —
+          ทั้งที่สำเร็จ ถูกยกเลิก ล้มเหลว หรือรอการชำระเงิน — พร้อมราคาที่ร้านค้าแจ้ง
+          สกุลเงิน และรหัสประจำการติดตั้งตามข้อ 3
+          เก็บไว้เพื่อให้เราตรวจสอบได้เมื่อคุณแจ้งว่าจ่ายเงินแล้วแต่ยังใช้งานไม่ได้
+          <strong>เราไม่เห็นอีเมลของบัญชี Google Play หรือ Apple ID ของคุณ</strong>{" "}
+          เพราะร้านค้าไม่ได้ส่งข้อมูลนั้นมาให้เรา
+        </p>
       </Section>
 
       <Section heading="5. บริการภายนอกที่แอปเรียกใช้">
@@ -227,7 +263,8 @@ function ThaiPolicy() {
               แปลงเสียงเป็นข้อความ แปลภาษา และอ่านภาพจากกล้อง
             </>,
             <>
-              <strong>Firebase (Google)</strong> — เก็บเนื้อหาของแอปและข้อมูลตามข้อ 4
+              <strong>Firebase (Google)</strong> —
+              เก็บเนื้อหาของแอป ข้อมูลการใช้งานตามข้อ 3 และข้อมูลการซื้อตามข้อ 4
             </>,
             <>
               <strong>ผู้ให้บริการข่าวสาร</strong> — ข่าวแจ้งเตือนที่แสดงบนหน้าแรก
@@ -256,7 +293,10 @@ function ThaiPolicy() {
           ภายใต้ PDPA คุณมีสิทธิขอเข้าถึง แก้ไข ลบ หรือคัดค้านการประมวลผลข้อมูลส่วนบุคคลของคุณ
           เนื่องจากแอปไม่มีบัญชีผู้ใช้ ข้อมูลเกือบทั้งหมดอยู่ในเครื่องของคุณเอง
           คุณจึงลบได้ทันทีด้วยการล้างข้อมูลแอปหรือถอนการติดตั้ง
-          หากต้องการให้ลบข้อมูลการซื้อตามข้อ 4 กรุณาติดต่อเราพร้อมแจ้งรหัสรายการซื้อ
+          ซึ่งจะทำให้รหัสประจำการติดตั้งเดิมไม่เชื่อมโยงกับคุณอีกต่อไป
+          หากต้องการให้ลบข้อมูลการใช้งานตามข้อ 3 หรือข้อมูลการซื้อตามข้อ 4
+          กรุณาติดต่อเราพร้อมแจ้งรหัสรายการซื้อ หรือรหัสประจำการติดตั้ง
+          ซึ่งดูได้ที่หน้าโปรไฟล์ในแอป
         </p>
       </Section>
 
@@ -310,6 +350,13 @@ function EnglishPolicy() {
           name, email address, phone number or profile for you, and we cannot
           identify an individual user.
         </p>
+        <p>
+          We do record a <strong>random identifier for each installation</strong>{" "}
+          of the app, described in section 3. It lets us count how many
+          installations there are and look into a purchase problem. It is not
+          derived from your device or your store account and cannot be used to
+          find out who you are.
+        </p>
       </Section>
 
       <Section heading="3. What the app uses, and what for">
@@ -338,8 +385,25 @@ function EnglishPolicy() {
               and the result is shown to you; we do not keep your recordings.
             </>,
             <>
-              <strong>Language choice</strong> — stored on your device only, so
-              the app remembers the language you picked.
+              <strong>Language choice</strong> — stored on your device so the
+              app remembers it, and included in the usage record below so we
+              know which languages to support properly.
+            </>,
+            <>
+              <strong>An installation identifier and basic usage data</strong> —
+              when the app opens we record a random value the app generates for
+              that installation, together with the date you first used it, the
+              date you last used it, your operating system, the app version, the
+              language you chose, and whether Premium is active. This is what
+              tells the operator how many people are using the app and helps us
+              investigate a purchase problem.{" "}
+              <strong>
+                The identifier is a random number. It is not your device id, not
+                an advertising id, not an IMEI, and it is attached to no name or
+                email address.
+              </strong>{" "}
+              Uninstalling and reinstalling produces a new one, and the old one
+              is no longer connected to you.
             </>,
           ]}
         />
@@ -366,6 +430,18 @@ function EnglishPolicy() {
           That record contains no name, no email, and nothing that identifies
           you.
         </p>
+        <p>
+          We also record <strong>the outcome of every purchase attempt</strong> —
+          completed, cancelled, failed, or awaiting payment — with the price and
+          currency the store quoted and the installation identifier from section
+          3. This is kept so that we can check what happened if you tell us you
+          paid and did not get access.{" "}
+          <strong>
+            We do not see the email address of your Google Play or Apple ID
+            account
+          </strong>
+          , because neither store gives it to us.
+        </p>
       </Section>
 
       <Section heading="5. Third-party services">
@@ -384,8 +460,9 @@ function EnglishPolicy() {
               recognition, translation, and reading text from a photo.
             </>,
             <>
-              <strong>Firebase (Google)</strong> — app content and the purchase
-              record described in section 4.
+              <strong>Firebase (Google)</strong> — app content, the usage
+              record described in section 3, and the purchase records described
+              in section 4.
             </>,
             <>
               <strong>A news provider</strong> — the travel notices shown on the
@@ -417,8 +494,11 @@ function EnglishPolicy() {
           or object to the processing of your personal data. Because the app has
           no account system, almost everything is held on your own device and
           you can remove it immediately by clearing the app&apos;s data or
-          uninstalling it. To have a purchase record from section 4 deleted,
-          contact us and quote the transaction id.
+          uninstalling it — which also leaves the old installation identifier
+          connected to nobody. To have a usage record from section 3 or a
+          purchase record from section 4 deleted, contact us and quote the
+          transaction id, or the installation identifier shown on the
+          app&apos;s Profile screen.
         </p>
       </Section>
 

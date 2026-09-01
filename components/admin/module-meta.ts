@@ -4,9 +4,11 @@ import {
   LayoutDashboard,
   ListChecks,
   MapPin,
+  Receipt,
   ShieldAlert,
   ShieldCheck,
   Tags,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +28,17 @@ export interface AdminModule {
    * meant to answer "what can I change from here".
    */
   isReference?: boolean;
+  /**
+   * Read-only reporting: it shows what the app has recorded rather than
+   * anything staff can change.
+   *
+   * Kept out of the dashboard's content cards for the same reason
+   * `isReference` is — a card beside three editors reads as a fourth thing to
+   * fill in, and there is nothing to fill in here. It is still a first-class
+   * nav item, because "how many people are using this and what have they
+   * bought" is the question the client opens the admin to answer.
+   */
+  isReadOnly?: boolean;
   /**
    * Lives outside `/admin` and opens in a new tab.
    *
@@ -68,6 +81,22 @@ export const ADMIN_MODULES: AdminModule[] = [
     icon: ShieldAlert,
   },
   {
+    href: "/admin/app-users",
+    label: "App Users",
+    description:
+      "Every app install, when it started using the app, and whether it has Premium.",
+    icon: Users,
+    isReadOnly: true,
+  },
+  {
+    href: "/admin/transactions",
+    label: "Transactions",
+    description:
+      "Every purchase the app reported to the store, including the failures.",
+    icon: Receipt,
+    isReadOnly: true,
+  },
+  {
     href: "/admin/guide",
     label: "User Guide",
     description:
@@ -106,5 +135,18 @@ export const ADMIN_MODULES: AdminModule[] = [
  * and the legal pages are read-only documents that live outside this admin.
  */
 export const CONTENT_MODULES = ADMIN_MODULES.filter(
-  (m) => m.href !== "/admin" && !m.isReference && !m.isExternal,
+  (m) =>
+    m.href !== "/admin" &&
+    !m.isReference &&
+    !m.isExternal &&
+    !m.isReadOnly,
 );
+
+/**
+ * The dashboard's second row: what the app has recorded, as opposed to what
+ * staff maintain. Separate from {@link CONTENT_MODULES} so the dashboard can
+ * label the two groups differently — "things you edit" and "things you read"
+ * are different promises, and mixing them is what makes an empty reporting
+ * page look like an unfinished form.
+ */
+export const REPORTING_MODULES = ADMIN_MODULES.filter((m) => m.isReadOnly);

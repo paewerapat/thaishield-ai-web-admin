@@ -162,6 +162,45 @@ Section 5 before save (see 1.5 / QA below).
 Written only by the Flutter app's `syncTravelAlerts` Cloud Function via the Admin SDK. Not
 in the Phase 1 quotation scope; leave it out of the admin UI entirely.
 
+### `app_users` and `purchase_transactions` — read-only reporting (added 2026-09-01)
+
+Written by the Flutter app, never by this admin. Surfaced at `/admin/app-users` and
+`/admin/transactions`. The exact shapes are in the app repo's `CLAUDE.md` §3; the read
+models are `lib/schemas/reporting.ts` and the queries `lib/actions/reporting.ts`.
+
+**Built for this request (2026-09-01):** "Transaction logs … รวมถึง user email
+ที่เข้าใช้งานตัวแอปด้วย … email นี้เริ่มใช้งานเมื่อไหร่ เป็น Premium หรือไม่".
+
+🚨 **There is no email column, and that is a decision the client made, not a gap to
+fill later by whoever reads this next.** The app has no sign-in (app `CLAUDE.md` §7) so it
+never sees an address, **and neither store returns one** — Play gives back only the
+`obfuscatedExternalAccountId` we ourselves sent, StoreKit gives no buyer identity at all.
+The published privacy policy also states in both languages that no account, name, email or
+profile is created. Getting an email means adding sign-in to the app, which is a scope
+change. On 2026-09-01 the client chose a random per-install id instead. `<ReportingNotice>`
+says all of this on screen, in Thai and English, so a missing column is not read as a bug.
+
+🚨 **A row is an install, not a person**, and every count on both pages is a count of
+installs. Reinstalling or changing handset creates a new row. Do not relabel these pages
+"Customers", and do not quote a figure from them as a user count.
+
+Three things in the read layer that look like tidying opportunities and are not:
+
+- `toMillis` returns a **number**, never a `Date` or a `Timestamp` — §3.9 below, and the
+  same class of bug that made every price-standard edit page unopenable.
+- Every field but the document id is optional. These rows come from handsets running app
+  versions this repo cannot pin; a strict parse would take the page down over one
+  malformed row.
+- `isCurrentlyPremium` checks the **expiry**, not just the stored status. The status field
+  is only as fresh as that install's last launch, so somebody who bought a week and
+  stopped opening the app would otherwise be counted as a current subscriber forever — in
+  the one figure the client will read as revenue.
+
+`LIST_LIMIT` lives in `lib/schemas/reporting.ts`, not beside the queries that use it: a
+`"use server"` module may export **nothing but async functions**, and exporting a constant
+from one fails `next build` while `tsc --noEmit` and vitest both stay green. A failed App
+Hosting build deploys nothing, silently (§10.5).
+
 ## 3.9 🚨 What a read may return: plain data only
 
 **Every `fromFirestore` must build its object field by field. Never return
@@ -284,6 +323,36 @@ remains untested**: that was moved to the developer's own tracking on request
 (2026-08-28) so it is reviewed rather than read by the client. Keep it that way;
 the code comment says so too.
 
+## 5.6 Reporting pages — `/admin/app-users` and `/admin/transactions` (added 2026-09-01)
+
+Read-only. No New, no Edit, no Delete — a row is an observation, and editing an
+observation is how a log stops being evidence. They carry `isReadOnly: true` in
+`ADMIN_MODULES`, which keeps them out of `CONTENT_MODULES` and puts them in
+their own "Reports — read-only" group on the dashboard instead. That separation
+is deliberate: "things you edit" and "things you read" are different promises,
+and an App Users page sitting between two Firestore editors reads as a form
+somebody forgot to fill in, with its empty state reading as a bug rather than as
+"nobody has opened the app yet".
+
+🚨 **They must stay under `/admin`.** Unlike `/terms` and `/privacy`, which are
+public on purpose, these pages list every install id and every transaction in the
+project. Auth is enforced in `app/admin/layout.tsx`, so moving either file
+outside that tree publishes both. `components/admin/module-meta.test.ts` fails if
+one ever does.
+
+Every figure on both pages carries a one-line caveat under it, and that is a rule
+rather than a style choice: a bare number on an admin page is what gets
+screenshotted and quoted, and each of these counts something narrower than its
+label suggests. "Premium now" excludes lapsed rows, "Installs" counts installs
+rather than people, and any total is capped at `LIST_LIMIT`. Both pages say when
+the view is capped.
+
+Money is **grouped by currency and never summed into one figure**. Both plans are
+priced in USD but each store charges in the buyer's own currency, so the rows
+genuinely hold several at once and a combined total would mean nothing while
+looking authoritative. Restores are excluded from it too — a restore replays a
+purchase already counted, and including it bills the same money twice.
+
 ---
 
 ## 6. Out of Scope (do not build)
@@ -294,8 +363,10 @@ the code comment says so too.
 - CRUD for `travel_alerts_cache` (Section 3 above).
 - Changes to the Flutter app's Firestore **read** rules — stay read-only/public for the app;
   this admin's writes go through the Admin SDK, which is unaffected by those rules.
-- New Firestore collections beyond the three listed — if the business needs more managed
-  data, that's a scope change to raise explicitly, not something to add silently.
+- New Firestore collections beyond the three **managed** ones — if the business needs more
+  data staff can edit, that's a scope change to raise explicitly, not something to add
+  silently. (`app_users` and `purchase_transactions`, added 2026-09-01, are read-only
+  reporting and are not managed content — see §3 and §5.6.)
 
 ## 7. Timeline (from `Requirement.html`)
 

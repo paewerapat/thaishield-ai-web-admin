@@ -50,6 +50,10 @@ const PHASES: Phase[] = [
       { label: "Draw and edit alert zones on the map", done: true },
       { label: "Google sign-in restricted to staff accounts", done: true },
       { label: "Public privacy policy page for store submission", done: true },
+      {
+        label: "App Users and Transactions reports (added 1 September)",
+        done: true,
+      },
     ],
   },
   {
