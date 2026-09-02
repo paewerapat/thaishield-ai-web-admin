@@ -152,6 +152,7 @@ import {
   listAlertZones,
   saveAlertZone,
 } from "./alert-zones";
+import { alertZoneInputSchema } from "@/lib/schemas/alert-zones";
 
 // --- Fixtures ---------------------------------------------------------------
 
@@ -745,11 +746,98 @@ describe("alert_zones CRUD", () => {
     expect(sizeOf("alert_zones")).toBe(0);
   });
 
+  // --- the 2026-09-02 regression ------------------------------------------
+  //
+  // 🚨 The client filled in Chinese, Korean, Russian and Japanese, saved,
+  // reopened the zone and found only Thai and English had stuck. `saveAlertZone`
+  // listed its fields by hand and named nine fewer than the schema validates,
+  // so the form collected them, the schema *required* four of them, and the
+  // write threw them away. Silently: no error, and `getAlertZone` reads them
+  // with `?? ""`, so the form reopened looking like nothing had been typed.
+  //
+  // The suite above did not catch it because every test here checked the
+  // polygon, the derived geometry or the wording rules — none checked that the
+  // text a human types comes back. These do.
+
+  it("stores all six descriptions, not just Thai and English", async () => {
+    await saveAlertZone(zoneInput(), "create");
+    const doc = docIn("alert_zones", "zz_test_zone")!;
+    const input = zoneInput() as Record<string, unknown>;
+
+    for (const lang of ["en", "th", "zh", "ko", "ru", "ja"]) {
+      expect(doc[`description_${lang}`], `description_${lang}`).toBe(
+        input[`description_${lang}`],
+      );
+    }
+  });
+
+  it("stores the optional per-language names", async () => {
+    await saveAlertZone(
+      zoneInput({
+        name_th: "สยามสแควร์",
+        name_zh: "暹罗广场",
+        name_ko: "시암 스퀘어",
+        name_ru: "Сиам-сквер",
+        name_ja: "サイアム・スクエア",
+      }),
+      "create",
+    );
+    const doc = docIn("alert_zones", "zz_test_zone")!;
+
+    expect(doc.name_th).toBe("สยามสแควร์");
+    expect(doc.name_zh).toBe("暹罗广场");
+    expect(doc.name_ko).toBe("시암 스퀘어");
+    expect(doc.name_ru).toBe("Сиам-сквер");
+    expect(doc.name_ja).toBe("サイアム・スクエア");
+  });
+
+  it("an unrelated edit does not wipe the four translations", async () => {
+    // The nastier half of the same bug. `.set()` REPLACES the document, so a
+    // zone that already had all six lost four of them the next time anyone
+    // touched it — to move a polygon point, say.
+    await saveAlertZone(zoneInput(), "create");
+    const moved = SQUARE.map((p) => ({ lat: p.lat, lng: p.lng + 0.01 }));
+
+    await saveAlertZone(
+      zoneInput({ polygon: moved }),
+      "edit",
+      "zz_test_zone",
+    );
+
+    const doc = docIn("alert_zones", "zz_test_zone")!;
+    const input = zoneInput() as Record<string, unknown>;
+    for (const lang of ["zh", "ko", "ru", "ja"]) {
+      expect(doc[`description_${lang}`], `description_${lang}`).toBe(
+        input[`description_${lang}`],
+      );
+    }
+  });
+
+  it("writes every field the schema accepts", async () => {
+    // The structural guard, and the one that would have caught this before a
+    // human did. The three tests above name today's nine fields; this one
+    // fails for the *next* field somebody adds to the schema and forgets to
+    // persist, without anyone having to remember to extend this file.
+    await saveAlertZone(zoneInput(), "create");
+    const doc = docIn("alert_zones", "zz_test_zone")!;
+    const parsed = alertZoneInputSchema.parse(zoneInput());
+
+    const missing = Object.keys(parsed).filter((key) => !(key in doc));
+    expect(
+      missing,
+      `saveAlertZone dropped ${missing.join(", ")} — the schema validates ` +
+        `these fields but the Firestore write does not persist them`,
+    ).toEqual([]);
+  });
+
   it("round-trips through getAlertZone and deletes", async () => {
     await saveAlertZone(zoneInput(), "create");
     const zone = await getAlertZone("zz_test_zone");
     expect(zone?.polygon).toEqual(SQUARE);
     expect(zone?.risk_level).toBe("caution");
+    // What the staff member actually sees when they reopen the form.
+    expect(zone?.description_zh).toBe(zoneInput().description_zh);
+    expect(zone?.description_ja).toBe(zoneInput().description_ja);
 
     expect((await listAlertZones()).map((z) => z.id)).toEqual(["zz_test_zone"]);
     expect(await deleteAlertZone("zz_test_zone")).toEqual({ ok: true });

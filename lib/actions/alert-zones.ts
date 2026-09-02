@@ -84,12 +84,37 @@ export async function saveAlertZone(
     const centroid = computePolygonCentroid(parsed.polygon);
     const radiusKm = computeBoundingRadiusKm(centroid, parsed.polygon);
 
+    // 🚨 **Spread `parsed`. Do not go back to listing fields by hand.**
+    //
+    // This block used to name each field individually, and it named nine fewer
+    // than the schema validates: `description_zh`, `description_ko`,
+    // `description_ru`, `description_ja` and all five optional `name_*`
+    // fields. The form collected them, the schema *required* four of them and
+    // rejected a save without them — and then the write silently dropped them.
+    //
+    // The client found it by using the product (2026-09-02): they filled in
+    // Chinese, Korean, Russian and Japanese, saved, reopened the zone and
+    // found only Thai and English had stuck. Nothing failed. No error, no
+    // warning, and `getAlertZone` reads those four with `?? ""`, so the form
+    // reopened looking like the text had simply never been typed.
+    //
+    // It was worse than a dropped write, because `.set()` REPLACES the
+    // document: a zone that already had the four translations lost them the
+    // next time anyone edited it for an unrelated reason.
+    //
+    // A hand-written payload has to be updated every time the schema grows,
+    // and nothing makes that happen — not the type system (extra schema keys
+    // are simply absent from the object literal, which is valid), not
+    // `tsc --noEmit`, and not the tests, which checked the polygon and the
+    // wording rules but never that the text staff type comes back. The other
+    // two modules spread `...parsed` and never had this bug.
+    //
+    // `polygon` and the three derived fields are overridden *after* the
+    // spread: the schema's polygon is `{lat,lng}[]` and Firestore must hold
+    // `GeoPoint[]` (CLAUDE.md §3 — the app casts, and a map silently yields an
+    // empty overlay).
     await ref.set({
-      id: parsed.id,
-      name: parsed.name,
-      risk_level: parsed.risk_level,
-      description_en: parsed.description_en,
-      description_th: parsed.description_th,
+      ...parsed,
       polygon: parsed.polygon.map((p) => new GeoPoint(p.lat, p.lng)),
       center_lat: centroid.lat,
       center_lng: centroid.lng,

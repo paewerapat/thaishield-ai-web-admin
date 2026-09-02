@@ -238,6 +238,48 @@ about what leaves the server, not what is stored.
 `crud-flow.test.ts` asserts all three collections return only plain objects.
 Do not delete those tests to make a change pass.
 
+## 3.10 🚨 What a write must contain: spread `parsed`, never a hand-written list
+
+**Every `.set()` must be `{ ...parsed, <derived overrides> }`.** Do not enumerate
+fields by hand.
+
+`saveAlertZone` did enumerate them, and named **nine fewer** than
+`alertZoneInputSchema` validates: `description_zh`, `description_ko`,
+`description_ru`, `description_ja`, and all five optional `name_*`. The form
+collected them. The schema *required* four of them and refused to save without
+them. The write then dropped them on the floor.
+
+The client found it by using the product on 2026-09-02 — filled in Chinese,
+Korean, Russian and Japanese, saved, reopened the zone, found only Thai and
+English. **Nothing failed anywhere**: no error, no warning, and `fromFirestore`
+reads those four with `?? ""`, so the form reopened looking like the text had
+never been typed. It is also worse than a dropped write, because `.set()`
+replaces the document — a zone that already had the translations would lose them
+on the next unrelated edit.
+
+Why nothing caught it:
+
+- **Not TypeScript.** A hand-written object literal that omits schema keys is
+  perfectly valid; there is no excess-property or missing-property error to
+  raise. `tsc --noEmit` was clean throughout.
+- **Not the tests.** `crud-flow.test.ts` checked the polygon shape, the derived
+  geometry and the wording rules — everything except that the text a human types
+  comes back out.
+- **Not review.** The list *looked* complete, and it was complete on the day it
+  was written. It went stale the day the schema grew, which is the failure mode
+  a hand-maintained list always has.
+
+`partner-locations` and `price-standards` both spread `...parsed` and never had
+this bug. Alert zones now does too, with the polygon and the three derived
+fields overridden after the spread (the schema's polygon is `{lat,lng}[]`,
+Firestore must hold `GeoPoint[]`).
+
+The regression guard is **`writes every field the schema accepts`** in
+`crud-flow.test.ts`: it parses a fixture, saves it, and asserts every key of the
+parsed result exists in the stored document. It fails for the *next* field
+somebody adds and forgets to persist, with nobody having to remember to extend
+the test. Add the equivalent to any new module.
+
 ## 4. Auth & Firestore Access Strategy
 
 - **Login: Google Sign-In only** (Firebase Auth `GoogleAuthProvider`) — no email/password,
