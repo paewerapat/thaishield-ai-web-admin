@@ -32,21 +32,25 @@ import {
 } from "@/lib/schemas/alert-zones";
 
 /**
- * All six, in the order the app's own language picker lists them. Required,
- * not optional: the app offers these six as equals, so an advisory that exists
- * only in English leaves four of them reading a language they may not have.
+ * All six, in the order the app's own language picker lists them.
  *
- * 🚨 Zones written before 2026-08-29 carry only English and Thai. Opening one
- * now and saving it will fail until the four new boxes are filled — deliberate,
- * but it lands on whoever edits an old zone next, not on whoever added this.
+ * Thai and English are required; the other four are optional and the app falls
+ * back to English for whichever are left blank (`AlertZone
+ * .localizedDescription` in the Flutter repo). They were required between
+ * 2026-08-29 and 2026-09-02 — see `lib/schemas/alert-zones.ts` for why the
+ * client reversed that, and do not quietly reinstate it.
+ *
+ * The optional four are still labelled and still first-class boxes rather than
+ * hidden behind a disclosure. A translation that exists should be typed here,
+ * and a field nobody sees is a field nobody fills.
  */
 const DESCRIPTION_LANGUAGES = [
-  { field: "description_th", label: "Thai" },
-  { field: "description_en", label: "English" },
-  { field: "description_zh", label: "Chinese (中文)" },
-  { field: "description_ko", label: "Korean (한국어)" },
-  { field: "description_ru", label: "Russian (Русский)" },
-  { field: "description_ja", label: "Japanese (日本語)" },
+  { field: "description_th", label: "Thai", required: true },
+  { field: "description_en", label: "English", required: true },
+  { field: "description_zh", label: "Chinese (中文)", required: false },
+  { field: "description_ko", label: "Korean (한국어)", required: false },
+  { field: "description_ru", label: "Russian (Русский)", required: false },
+  { field: "description_ja", label: "Japanese (日本語)", required: false },
 ] as const;
 
 function toFieldValues(input?: AlertZoneInput) {
@@ -228,10 +232,14 @@ export function AlertZoneForm({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {DESCRIPTION_LANGUAGES.map(({ field, label }) => (
+          {DESCRIPTION_LANGUAGES.map(({ field, label, required }) => (
             <FormField
               key={field}
-              label={label}
+              // Says which boxes must be filled, on the box itself. Without it
+              // the only way to find out is to fill the form, press Save and
+              // read an error — and staff were doing exactly that while the
+              // four were required.
+              label={required ? label : `${label} — optional`}
               htmlFor={field}
               error={fieldErrors[field]}
             >

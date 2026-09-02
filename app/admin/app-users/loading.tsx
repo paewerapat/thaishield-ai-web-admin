@@ -15,6 +15,7 @@ export default function AppUsersLoading() {
     <>
       <PageHeader title={TITLE} description={DESCRIPTION} />
       <TableSkeleton
+        withToolbar
         rows={8}
         columns={[
           { head: "Install", bar: "w-20" },

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Pencil, Plus, Tags } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
 import { DeleteRowButton } from "@/components/admin/delete-row-button";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ListToolbar } from "@/components/admin/list-toolbar";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { TableEmptyState } from "@/components/admin/table-empty-state";
@@ -19,10 +21,61 @@ import {
   deletePriceStandardFormAction,
   listPriceStandards,
 } from "@/lib/actions/price-standards";
+import {
+  PRICE_STANDARD_CATEGORIES,
+  type PriceStandard,
+} from "@/lib/schemas/price-standards";
+import {
+  applyListQuery,
+  describeList,
+  parseListParams,
+  type ListConfig,
+  type RawSearchParams,
+} from "@/lib/query/list-query";
 import { DESCRIPTION, TITLE } from "./meta";
 
-export default async function PriceStandardsPage() {
-  let items;
+const BASE_PATH = "/admin/price-standards";
+
+const LIST: ListConfig<PriceStandard> = {
+  // All six names, not just English. A staff member looking for ผัดไทย types
+  // it in Thai, and a search that only matched `name_en` would answer "no
+  // results" over a row that is right there.
+  search: (row) => [
+    row.id,
+    row.name_en,
+    row.name_th,
+    row.name_zh,
+    row.name_ko,
+    row.name_ru,
+    row.name_ja,
+  ],
+  sorts: [
+    { key: "name", label: "Name (EN)", get: (row) => row.name_en },
+    { key: "id", label: "ID", get: (row) => row.id },
+    { key: "category", label: "Category", get: (row) => row.category },
+    { key: "min", label: "Min price", get: (row) => row.min_price },
+    { key: "max", label: "Max price", get: (row) => row.max_price },
+  ],
+  filters: [
+    {
+      key: "category",
+      label: "Category",
+      options: PRICE_STANDARD_CATEGORIES.map((value) => ({
+        value,
+        label: value,
+      })),
+      get: (row) => row.category,
+    },
+  ],
+  defaultSort: "name",
+};
+
+export default async function PriceStandardsPage({
+  searchParams,
+}: {
+  searchParams?: RawSearchParams;
+}) {
+  let items: PriceStandard[];
   try {
     items = await listPriceStandards();
   } catch (error) {
@@ -34,6 +87,9 @@ export default async function PriceStandardsPage() {
     );
   }
 
+  const params = parseListParams(searchParams, LIST);
+  const result = applyListQuery(items, params, LIST);
+
   return (
     <>
       <PageHeader
@@ -41,12 +97,18 @@ export default async function PriceStandardsPage() {
         description={DESCRIPTION}
         action={
           <Button asChild>
-            <Link href="/admin/price-standards/new">
+            <Link href={`${BASE_PATH}/new`}>
               <Plus className="size-4" aria-hidden />
               New price standard
             </Link>
           </Button>
         }
+      />
+
+      <ListToolbar
+        params={params}
+        descriptor={describeList(LIST)}
+        placeholder="Search by name in any language, or ID"
       />
 
       <Card className="overflow-hidden">
@@ -61,14 +123,18 @@ export default async function PriceStandardsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.length === 0 ? (
+            {result.rows.length === 0 ? (
               <TableEmptyState
                 colSpan={5}
                 icon={Tags}
-                message="No price standards yet. Create the first one to get started."
+                message={
+                  result.isFiltered
+                    ? "No price standards match this search. Try a different word, or clear the filters."
+                    : "No price standards yet. Create the first one to get started."
+                }
               />
             ) : (
-              items.map((item) => (
+              result.rows.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {item.id}
@@ -84,7 +150,7 @@ export default async function PriceStandardsPage() {
                   <TableCell>
                     <div className="flex justify-end gap-1">
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/admin/price-standards/${item.id}/edit`}>
+                        <Link href={`${BASE_PATH}/${item.id}/edit`}>
                           <Pencil className="size-3.5" aria-hidden />
                           Edit
                         </Link>
@@ -102,6 +168,13 @@ export default async function PriceStandardsPage() {
           </TableBody>
         </Table>
       </Card>
+
+      <ListPagination
+        result={result}
+        params={params}
+        basePath={BASE_PATH}
+        noun="price standards"
+      />
     </>
   );
 }

@@ -97,14 +97,24 @@ describe("alertZoneInputSchema", () => {
   });
 });
 
-describe("advisory text exists in every language the app offers", () => {
-  // The app's first screen offers six languages as equals. An advisory that
-  // exists only in English leaves four of those readers with text they may not
-  // read, on the one string that describes a real place. Optional would mean
-  // empty, and empty would mean English forever.
-  const LANGUAGES = ["en", "th", "zh", "ko", "ru", "ja"] as const;
+describe("advisory text: English and Thai are required, the rest optional", () => {
+  // 🚨 This block asserted all six until 2026-09-02. It now asserts two, and
+  // the change was the client's decision — see `lib/schemas/alert-zones.ts`.
+  //
+  // The old reasoning is worth keeping because it is still true as far as it
+  // goes: the app's first screen offers six languages as equals, so an
+  // advisory that exists only in English leaves four of those readers with
+  // text they may not read, on the one string that describes a real place.
+  // What killed it was that 4,053 live zones carry none of the four, so
+  // requiring them locked the entire collection against any edit — a typo fix
+  // included — behind 16,212 translations nobody had written.
+  //
+  // English and Thai stay required, and that is not arbitrary: English is the
+  // fallback target (`AlertZone.localizedDescription`), so a blank English box
+  // leaves a reader in any of the four optional languages with nothing at all.
+  const REQUIRED_LANGUAGES = ["en", "th"] as const;
 
-  for (const lang of LANGUAGES) {
+  for (const lang of REQUIRED_LANGUAGES) {
     it(`rejects a zone with no ${lang} description`, () => {
       const input = validInput();
       delete (input as Record<string, unknown>)[`description_${lang}`];
@@ -126,6 +136,70 @@ describe("advisory text exists in every language the app offers", () => {
     // field is exactly as actionable there as in the English one.
     const result = alertZoneInputSchema.safeParse(
       validInput({ description_ja: "ここは tourist trap です" }),
+    );
+    expect(result.success).toBe(false);
+  });
+
+  // --- the 2026-09-02 reversal ---------------------------------------------
+  //
+  // 🚨 These four were REQUIRED from 2026-08-29 to 2026-09-02. The client
+  // reversed it after the arithmetic came out: 4,053 live zones, none of them
+  // carrying any of the four, and a requirement that locked every one of them
+  // against any edit at all until 16,212 translations were typed. Optional is
+  // now the contract, and the app falls back to English.
+  //
+  // If a future change puts `.min(1)` back on any of them, these fail — which
+  // is the point. That is a scope decision, not a tidy-up.
+
+  it("accepts a zone with only English and Thai filled in", () => {
+    const result = alertZoneInputSchema.safeParse(
+      validInput({
+        description_zh: "",
+        description_ko: "",
+        description_ru: "",
+        description_ja: "",
+      }),
+    );
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a zone that omits the four keys entirely", () => {
+    // What an older client, or a form that stops sending empty boxes, posts.
+    const input = validInput() as Record<string, unknown>;
+    for (const k of [
+      "description_zh",
+      "description_ko",
+      "description_ru",
+      "description_ja",
+    ]) {
+      delete input[k];
+    }
+    const result = alertZoneInputSchema.safeParse(input);
+    expect(result.success).toBe(true);
+    // Defaulted to "", never undefined: the write spreads `parsed` straight
+    // into Firestore, and `undefined` there is a field the Admin SDK rejects.
+    if (result.success) {
+      expect(result.data.description_zh).toBe("");
+      expect(result.data.description_ja).toBe("");
+    }
+  });
+
+  it("still requires English and Thai", () => {
+    // The fallback target itself cannot be blank. If English goes, a reader in
+    // any of the four optional languages gets nothing at all.
+    for (const field of ["description_en", "description_th"]) {
+      const result = alertZoneInputSchema.safeParse(
+        validInput({ [field]: "" }),
+      );
+      expect(result.success, field).toBe(false);
+    }
+  });
+
+  it("still checks the wording rules on an optional language that is filled", () => {
+    // Optional means "may be blank", not "unchecked". A §10 violation in the
+    // Japanese box is exactly as actionable as one in the English box.
+    const result = alertZoneInputSchema.safeParse(
+      validInput({ description_ru: "This is a scam area" }),
     );
     expect(result.success).toBe(false);
   });

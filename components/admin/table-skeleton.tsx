@@ -36,12 +36,30 @@ export interface TableSkeletonColumn {
 export function TableSkeleton({
   columns,
   rows = 5,
+  withToolbar = false,
 }: {
   columns: TableSkeletonColumn[];
+  /**
+   * Reserves the space the search / filter / sort bar will occupy.
+   *
+   * Every list page has one since 2026-09-02, and a skeleton without it drops
+   * the whole table upward by ~52px the moment the data lands — the exact
+   * reflow this component's header comment says a skeleton exists to prevent.
+   */
+  withToolbar?: boolean;
   rows?: number;
 }) {
   return (
-    <Card className="overflow-hidden">
+    <>
+      {withToolbar && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Skeleton className="h-9 min-w-[16rem] flex-1" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-20" />
+        </div>
+      )}
+      <Card className="overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -72,7 +90,8 @@ export function TableSkeleton({
           ))}
         </TableBody>
       </Table>
-    </Card>
+      </Card>
+    </>
   );
 }
 

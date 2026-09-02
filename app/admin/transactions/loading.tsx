@@ -8,6 +8,7 @@ export default function TransactionsLoading() {
     <>
       <PageHeader title={TITLE} description={DESCRIPTION} />
       <TableSkeleton
+        withToolbar
         rows={8}
         columns={[
           { head: "Transaction", bar: "w-20" },

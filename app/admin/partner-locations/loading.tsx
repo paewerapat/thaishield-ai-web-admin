@@ -20,6 +20,7 @@ export default function PartnerLocationsLoading() {
       />
 
       <TableSkeleton
+        withToolbar
         columns={[
           { head: "Name", bar: "w-44" },
           { head: "Type", bar: "w-24" },

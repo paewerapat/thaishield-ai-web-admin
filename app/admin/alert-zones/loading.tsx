@@ -24,6 +24,7 @@ export default function AlertZonesLoading() {
       />
 
       <TableSkeleton
+        withToolbar
         columns={[
           { head: "Name", bar: "w-44" },
           { head: "Risk level", bar: "w-20" },

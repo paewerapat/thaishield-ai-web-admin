@@ -1,5 +1,7 @@
 import { Receipt } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ListToolbar } from "@/components/admin/list-toolbar";
 import { PageHeader } from "@/components/admin/page-header";
 import { ReportingNotice } from "@/components/admin/reporting-notice";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -23,10 +25,76 @@ import {
 } from "@/lib/format-datetime";
 import {
   LIST_LIMIT,
+  PURCHASE_LOG_STATUSES,
   totalsByCurrency,
   type PurchaseLogStatus,
+  type PurchaseTransactionRow,
 } from "@/lib/schemas/reporting";
+import {
+  applyListQuery,
+  describeList,
+  parseListParams,
+  type ListConfig,
+  type RawSearchParams,
+} from "@/lib/query/list-query";
 import { DESCRIPTION, TITLE } from "./meta";
+
+const BASE_PATH = "/admin/transactions";
+
+const LIST: ListConfig<PurchaseTransactionRow> = {
+  // The transaction id and the install id are both searchable because both are
+  // what a support question arrives quoting — the store's id from a receipt
+  // the user forwarded, or the install id off the app's Profile screen.
+  search: (row) => [
+    row.purchaseId,
+    row.installId,
+    row.productId,
+    row.errorMessage,
+  ],
+  sorts: [
+    {
+      key: "recorded",
+      label: "Recorded",
+      get: (row) => row.recordedAt,
+      defaultDir: "desc",
+    },
+    {
+      key: "purchased",
+      label: "Purchased",
+      get: (row) => row.purchasedAt,
+      defaultDir: "desc",
+    },
+    { key: "status", label: "Status", get: (row) => row.status },
+    { key: "product", label: "Product", get: (row) => row.productId },
+    {
+      key: "amount",
+      label: "Amount",
+      get: (row) => row.priceAmount,
+      defaultDir: "desc",
+    },
+    { key: "platform", label: "Platform", get: (row) => row.platform },
+  ],
+  filters: [
+    {
+      key: "status",
+      label: "Status",
+      // Straight off the schema, so a state the app can log is never a state
+      // this page cannot filter to.
+      options: PURCHASE_LOG_STATUSES.map((value) => ({ value, label: value })),
+      get: (row) => row.status,
+    },
+    {
+      key: "platform",
+      label: "Platform",
+      options: [
+        { value: "android", label: "Android" },
+        { value: "ios", label: "iOS" },
+      ],
+      get: (row) => row.platform,
+    },
+  ],
+  defaultSort: "recorded",
+};
 
 /**
  * The purchase log the client asked for on 2026-09-01.
@@ -69,8 +137,12 @@ const STATUS_TONES: Record<
   failed: "danger",
 };
 
-export default async function TransactionsPage() {
-  let rows;
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams?: RawSearchParams;
+}) {
+  let rows: PurchaseTransactionRow[];
   try {
     rows = await listPurchaseTransactions();
   } catch (error) {
@@ -89,6 +161,9 @@ export default async function TransactionsPage() {
   const pending = rows.filter((row) => row.status === "pending").length;
   const totals = totalsByCurrency(rows);
   const capped = rows.length === LIST_LIMIT;
+
+  const params = parseListParams(searchParams, LIST);
+  const result = applyListQuery(rows, params, LIST);
 
   return (
     <>
@@ -129,6 +204,12 @@ export default async function TransactionsPage() {
         ]}
       />
 
+      <ListToolbar
+        params={params}
+        descriptor={describeList(LIST)}
+        placeholder="Search by transaction ID, install ID, product or error"
+      />
+
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -145,14 +226,18 @@ export default async function TransactionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 ? (
+              {result.rows.length === 0 ? (
                 <TableEmptyState
                   colSpan={8}
                   icon={Receipt}
-                  message="No transactions yet. Nothing can be bought until the store products exist, which needs the Payments Profile."
+                  message={
+                    result.isFiltered
+                      ? "No transactions match this search. Try a different word, or clear the filters."
+                      : "No transactions yet. Nothing can be bought until the store products exist, which needs the Payments Profile."
+                  }
                 />
               ) : (
-                rows.map((row) => (
+                result.rows.map((row) => (
                   <TableRow key={row.purchaseId}>
                     <TableCell
                       className="font-mono text-xs text-muted-foreground"
@@ -206,6 +291,13 @@ export default async function TransactionsPage() {
           </Table>
         </div>
       </Card>
+
+      <ListPagination
+        result={result}
+        params={params}
+        basePath={BASE_PATH}
+        noun="transactions"
+      />
 
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
         {capped && (

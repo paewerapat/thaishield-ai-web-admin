@@ -1,5 +1,7 @@
 import { Users } from "lucide-react";
 import { DataErrorNotice } from "@/components/admin/data-error-notice";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ListToolbar } from "@/components/admin/list-toolbar";
 import { PageHeader } from "@/components/admin/page-header";
 import { ReportingNotice } from "@/components/admin/reporting-notice";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -24,11 +26,21 @@ import {
 } from "@/lib/format-datetime";
 import {
   isCurrentlyOnTrial,
-  LIST_LIMIT,
   isCurrentlyPremium,
+  LIST_LIMIT,
   type AccessStatus,
+  type AppUserRow,
 } from "@/lib/schemas/reporting";
+import {
+  applyListQuery,
+  describeList,
+  parseListParams,
+  type ListConfig,
+  type RawSearchParams,
+} from "@/lib/query/list-query";
 import { DESCRIPTION, TITLE } from "./meta";
+
+const BASE_PATH = "/admin/app-users";
 
 /**
  * "email นี้เริ่มใช้งานเมื่อไหร่ เป็น Premium หรือไม่" — the client's request of
@@ -57,10 +69,96 @@ const STATUS_TONES: Record<AccessStatus, "success" | "warning" | "neutral"> = {
   free: "neutral",
 };
 
-export default async function AppUsersPage() {
-  let rows;
+/**
+ * A row plus the status it has **right now**.
+ *
+ * 🚨 Derived once, from one `now`, and then used for the badge, the sort, the
+ * filter and the summary counts alike. Computing it separately in each place
+ * would let the filter and the badge disagree — "status: premium" returning a
+ * row the table then draws as `free` — for rows whose expiry falls between two
+ * `Date.now()` calls.
+ *
+ * It is not the stored `status` field, which is only as fresh as that
+ * install's last launch: somebody who bought a week and stopped opening the
+ * app keeps `status: "premium"` on their document forever.
+ */
+type AppUserListRow = AppUserRow & { live: AccessStatus };
+
+function withLiveStatus(rows: AppUserRow[], now: number): AppUserListRow[] {
+  return rows.map((row) => ({
+    ...row,
+    live: isCurrentlyPremium(row, now)
+      ? "premium"
+      : isCurrentlyOnTrial(row, now)
+        ? "trial"
+        : "free",
+  }));
+}
+
+const LIST: ListConfig<AppUserListRow> = {
+  // Install id, plan and version. Support questions arrive quoting one of the
+  // three — an install id copied off the app's Profile screen, or "everyone on
+  // 1.1.24 is affected".
+  search: (row) => [row.installId, row.planId, row.appVersion, row.locale],
+  sorts: [
+    {
+      key: "last",
+      label: "Last seen",
+      get: (row) => row.lastSeenAt,
+      // Most recently active first. An "active users" list that opens on the
+      // install nobody has touched since June is answering a different
+      // question from the one being asked.
+      defaultDir: "desc",
+    },
+    {
+      key: "first",
+      label: "Started using",
+      get: (row) => row.firstSeenAt,
+      defaultDir: "desc",
+    },
+    { key: "status", label: "Status", get: (row) => row.live },
+    {
+      key: "expires",
+      label: "Access until",
+      get: (row) => row.expiresAt,
+      defaultDir: "desc",
+    },
+    { key: "platform", label: "Platform", get: (row) => row.platform },
+    { key: "version", label: "App version", get: (row) => row.appVersion },
+    { key: "locale", label: "Language", get: (row) => row.locale },
+  ],
+  filters: [
+    {
+      key: "status",
+      label: "Status",
+      options: [
+        { value: "premium", label: "Premium" },
+        { value: "trial", label: "Trial" },
+        { value: "free", label: "Free" },
+      ],
+      get: (row) => row.live,
+    },
+    {
+      key: "platform",
+      label: "Platform",
+      options: [
+        { value: "android", label: "Android" },
+        { value: "ios", label: "iOS" },
+      ],
+      get: (row) => row.platform,
+    },
+  ],
+  defaultSort: "last",
+};
+
+export default async function AppUsersPage({
+  searchParams,
+}: {
+  searchParams?: RawSearchParams;
+}) {
+  let fetched: AppUserRow[];
   try {
-    rows = await listAppUsers();
+    fetched = await listAppUsers();
   } catch (error) {
     return (
       <>
@@ -71,16 +169,21 @@ export default async function AppUsersPage() {
   }
 
   const now = Date.now();
-  const premium = rows.filter((row) => isCurrentlyPremium(row, now)).length;
-  const trial = rows.filter((row) => isCurrentlyOnTrial(row, now)).length;
-  const capped = rows.length === LIST_LIMIT;
+  const rows = withLiveStatus(fetched, now);
 
-  // 24 hours rather than a calendar day: staff open this page at any hour, and
-  // "active today" resetting at midnight would make the figure drop for a
-  // reason that has nothing to do with the app.
+  // 🚨 The summary counts the whole collection, never the filtered view. These
+  // tiles read as facts about the product — "Premium now: 3" — and a figure
+  // that silently meant "3 among the rows matching your search" is the kind of
+  // number that gets repeated somewhere it matters.
+  const premium = rows.filter((row) => row.live === "premium").length;
+  const trial = rows.filter((row) => row.live === "trial").length;
+  const capped = rows.length === LIST_LIMIT;
   const activeDay = rows.filter(
     (row) => row.lastSeenAt !== null && now - row.lastSeenAt < 86_400_000,
   ).length;
+
+  const params = parseListParams(searchParams, LIST);
+  const result = applyListQuery(rows, params, LIST);
 
   return (
     <>
@@ -105,7 +208,6 @@ export default async function AppUsersPage() {
           {
             label: "On free trial",
             value: `${trial}`,
-            // The distinction the client's revenue question turns on.
             hint: "3-day trial still running. Has paid nothing.",
           },
           {
@@ -116,10 +218,13 @@ export default async function AppUsersPage() {
         ]}
       />
 
+      <ListToolbar
+        params={params}
+        descriptor={describeList(LIST)}
+        placeholder="Search by install ID, plan, version or language"
+      />
+
       <Card className="overflow-hidden">
-        {/* The table is wider than a laptop viewport with the notice above it,
-            so it scrolls inside its own container rather than pushing the page
-            sideways. */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -136,81 +241,82 @@ export default async function AppUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.length === 0 ? (
+              {result.rows.length === 0 ? (
                 <TableEmptyState
                   colSpan={9}
                   icon={Users}
-                  message="No installs recorded yet. A row appears the first time the app is opened with this build installed."
+                  message={
+                    result.isFiltered
+                      ? "No installs match this search. Try a different word, or clear the filters."
+                      : "No installs recorded yet. A row appears the first time the app is opened with this build installed."
+                  }
                 />
               ) : (
-                rows.map((row) => {
-                  const live = isCurrentlyPremium(row, now)
-                    ? "premium"
-                    : isCurrentlyOnTrial(row, now)
-                      ? "trial"
-                      : "free";
-
-                  return (
-                    <TableRow key={row.installId}>
-                      <TableCell
-                        className="font-mono text-xs text-muted-foreground"
-                        // The full id, so support can still copy it.
-                        title={row.installId}
-                      >
-                        {shortId(row.installId)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDate(row.firstSeenAt)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDateTime(row.lastSeenAt)}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {formatRelative(row.lastSeenAt, now)}
+                result.rows.map((row) => (
+                  <TableRow key={row.installId}>
+                    <TableCell
+                      className="font-mono text-xs text-muted-foreground"
+                      title={row.installId}
+                    >
+                      {shortId(row.installId)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDate(row.firstSeenAt)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(row.lastSeenAt)}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {formatRelative(row.lastSeenAt, now)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge
+                        value={row.live}
+                        tone={STATUS_TONES[row.live]}
+                      />
+                      {row.status !== null && row.status !== row.live && (
+                        <span
+                          className="ml-2 text-xs text-muted-foreground"
+                          title={`Last reported "${row.status}", now expired`}
+                        >
+                          was {row.status}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        {/* The live value, not the stored one: a row saying
-                            "premium" whose expiry has passed is somebody who
-                            has lapsed, and showing the stored word would count
-                            them as a current subscriber. */}
-                        <StatusBadge value={live} tone={STATUS_TONES[live]} />
-                        {row.status !== null && row.status !== live && (
-                          <span
-                            className="ml-2 text-xs text-muted-foreground"
-                            title={`Last reported "${row.status}", now expired`}
-                          >
-                            was {row.status}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {row.planId ?? EMPTY}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDateTime(row.expiresAt)}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {row.platform ?? EMPTY}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                        {row.appVersion ?? EMPTY}
-                      </TableCell>
-                      <TableCell className="uppercase">
-                        {row.locale ?? EMPTY}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {row.planId ?? EMPTY}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDateTime(row.expiresAt)}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {row.platform ?? EMPTY}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {row.appVersion ?? EMPTY}
+                    </TableCell>
+                    <TableCell className="uppercase">
+                      {row.locale ?? EMPTY}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
         </div>
       </Card>
 
+      <ListPagination
+        result={result}
+        params={params}
+        basePath={BASE_PATH}
+        noun="installs"
+      />
+
       {capped && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Showing the {LIST_LIMIT} most recently active installs. Older rows are
-          in Firestore but not on this page.
+        <p className="mt-2 text-xs text-muted-foreground">
+          Only the {LIST_LIMIT} most recently active installs are loaded, so the
+          search covers those and not the whole collection.
         </p>
       )}
     </>

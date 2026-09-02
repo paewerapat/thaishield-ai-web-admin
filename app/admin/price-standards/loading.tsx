@@ -25,6 +25,7 @@ export default function PriceStandardsLoading() {
       />
 
       <TableSkeleton
+        withToolbar
         rows={8}
         columns={[
           { head: "ID", bar: "w-36" },

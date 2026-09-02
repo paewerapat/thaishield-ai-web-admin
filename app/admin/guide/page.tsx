@@ -189,6 +189,52 @@ export default function GuidePage() {
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
+        Finding a row
+      </h2>
+
+      <Card>
+        <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
+          <p>
+            Every list has a search box, filters, a sort control and pages.
+            There are <strong className="text-foreground">4,053 alert zones</strong>,
+            so scrolling is not a way to find one.
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                Search matches any part of the text, not just the beginning.
+              </strong>{" "}
+              Typing &ldquo;beach&rdquo; finds &ldquo;Koh Larn Beach&rdquo;. It
+              looks in the name and the ID, and on the price list it looks in
+              all six languages — so you can type ผัดไทย.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                The address bar remembers what you are looking at.
+              </strong>{" "}
+              A search, a filter and a page number are all in the link, so you
+              can bookmark a view or paste it to someone else and they see the
+              same rows.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+            <span>
+              <strong className="text-foreground">
+                Rows with nothing in the sorted column go to the bottom
+              </strong>{" "}
+              whichever way you sort. An empty box is treated as missing, not as
+              a small value, so it never fills the first page.
+            </span>
+          </p>
+        </CardContent>
+      </Card>
+
+      <h2 className="mb-3 mt-8 text-lg font-semibold tracking-tight">
         The two report pages
       </h2>
 

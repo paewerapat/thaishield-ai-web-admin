@@ -60,22 +60,41 @@ export const alertZoneInputSchema = z
     risk_level: z.enum(ALERT_ZONE_RISK_LEVELS, {
       error: `Risk level must be one of: ${ALERT_ZONE_RISK_LEVELS.join(", ")}`,
     }),
-    // All six, all required. The app offers six languages as equals on its
-    // first screen, so a Korean tourist who picks Korean and then meets an
-    // English advisory was sold something the app does not deliver — and this
-    // text is the app describing a real place, which is the most consequential
-    // string it shows.
+    // English and Thai are required. The other four are optional, and the app
+    // falls back to English for whichever are blank — `AlertZone
+    // .localizedDescription` in the Flutter repo does exactly that, and it is
+    // the reason this is safe rather than merely convenient.
     //
-    // 🚨 Required, not optional, and that has a cost: zones written before
-    // 2026-08-29 have only en/th, so opening one and saving it now fails until
-    // the four new boxes are filled. That pressure is the point, but it is felt
-    // by staff on their next edit, not by whoever added this field.
+    // 🚨 **The four were required from 2026-08-29 to 2026-09-02, and the
+    // reversal was the client's decision, not a simplification.** Do not put
+    // `.min(1)` back on them without asking.
+    //
+    // The original argument still stands on its own terms: the app offers six
+    // languages as equals on its first screen, so a Korean tourist who picks
+    // Korean and meets an English advisory was sold something the app does not
+    // quite deliver, and this text is the app describing a real place — the
+    // most consequential string it shows.
+    //
+    // What that argument did not survive is the arithmetic. Requiring the four
+    // means **no zone can be edited for any reason** — moving one polygon
+    // point, fixing a typo — until four translations are typed. There are
+    // **4,053 live zones and not one of them has any of the four**, so the
+    // requirement was not a nudge toward a backfill; it was a lock on the
+    // whole collection, 16,212 translations deep. Put to the client on
+    // 2026-09-02 with three options; they chose optional-plus-fallback.
+    //
+    // The gap is real and is not closed by this change: a Russian speaker
+    // reading a zone still gets English. Closing it means someone translating
+    // 16,212 strings under the §10 wording rules — a content project, not a
+    // schema one. **Do not bulk-fill this with machine translation**: it is
+    // the app making claims about a real place, and a mistranslated advisory
+    // is the specific legal risk §10 exists to avoid.
     description_en: z.string().trim().min(1, "English description is required"),
     description_th: z.string().trim().min(1, "Thai description is required"),
-    description_zh: z.string().trim().min(1, "Chinese description is required"),
-    description_ko: z.string().trim().min(1, "Korean description is required"),
-    description_ru: z.string().trim().min(1, "Russian description is required"),
-    description_ja: z.string().trim().min(1, "Japanese description is required"),
+    description_zh: z.string().trim().default(""),
+    description_ko: z.string().trim().default(""),
+    description_ru: z.string().trim().default(""),
+    description_ja: z.string().trim().default(""),
   })
   .superRefine((data, ctx) => {
     const enIssue = wordingIssueMessage(data.description_en);

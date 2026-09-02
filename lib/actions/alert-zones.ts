@@ -24,10 +24,10 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
     risk_level: data.risk_level,
     description_en: data.description_en,
     description_th: data.description_th,
-    // Zones written before 2026-08-29 have no value in these four. They read
-    // back as empty strings so the form can open them at all; saving then
-    // requires filling them, which is the intended nudge. The app falls back
-    // to English meanwhile, so nothing on the map goes blank in the interim.
+    // Optional since 2026-09-02, and empty is the normal case — all 4,053 live
+    // zones have none of the four. They read back as "" so the form opens with
+    // empty boxes rather than `undefined`, and the app falls back to English
+    // for whichever are blank (`AlertZone.localizedDescription`).
     description_zh: data.description_zh ?? "",
     description_ko: data.description_ko ?? "",
     description_ru: data.description_ru ?? "",
@@ -39,13 +39,58 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
   };
 }
 
-export async function listAlertZones(): Promise<AlertZone[]> {
+/**
+ * One row of the zone list — only what the table draws.
+ *
+ * Not `AlertZone`. There are 4,053 zones and the full document carries six
+ * descriptions and five optional names, none of which the list renders; at
+ * that row count the text is most of the payload. `point_count` is derived on
+ * the server so the polygon itself never has to be serialised into the page.
+ */
+export interface AlertZoneListRow {
+  id: string;
+  name: string;
+  risk_level: string;
+  radius_km: number;
+  point_count: number;
+}
+
+export async function listAlertZones(): Promise<AlertZoneListRow[]> {
   await requireAdminSession();
+
+  // 🚨 No `orderBy`. Two reasons, and the first has already cost this project
+  // a bug:
+  //
+  //  - **`orderBy(field)` silently EXCLUDES every document missing that
+  //    field.** Ordering `price_standards` by its `id` field dropped all 61
+  //    live documents and staff saw an empty table over populated data (see
+  //    `price-standards.ts`). `name` is present on every zone today, and that
+  //    is exactly the kind of thing that stops being true without anyone
+  //    noticing.
+  //  - Sorting happens in memory now anyway (`lib/query/list-query.ts`), by
+  //    whichever column the user picked, so a server-side order would only be
+  //    thrown away.
+  //
+  // `.select()` keeps the six descriptions and five names out of the response.
   const snapshot = await getAdminFirestore()
     .collection(COLLECTION)
-    .orderBy("name")
+    .select("name", "risk_level", "radius_km", "polygon")
     .get();
-  return snapshot.docs.map((doc) => fromFirestore(doc.id, doc.data()));
+
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    const polygon = (data.polygon as GeoPoint[] | undefined) ?? [];
+    return {
+      id: doc.id,
+      name: (data.name as string | undefined) ?? "",
+      risk_level: (data.risk_level as string | undefined) ?? "",
+      // Defaulted rather than trusted: a zone seeded before the CMS existed
+      // may have no derived fields, and `undefined.toFixed()` would take the
+      // whole page down over one bad row.
+      radius_km: (data.radius_km as number | undefined) ?? 0,
+      point_count: polygon.length,
+    };
+  });
 }
 
 export async function getAlertZone(id: string): Promise<AlertZone | null> {

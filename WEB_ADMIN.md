@@ -280,6 +280,48 @@ parsed result exists in the stored document. It fails for the *next* field
 somebody adds and forgets to persist, with nobody having to remember to extend
 the test. Add the equivalent to any new module.
 
+## 3.11 Search, filter, sort and pagination (added 2026-09-02)
+
+Every list page has them. The shared pieces are `lib/query/list-query.ts` (pure,
+tested), `<ListToolbar>` (client) and `<ListPagination>` (server); a page adds
+one `ListConfig` object and nothing else.
+
+**State lives in the URL** (`?q=&sort=&dir=&page=&<filter>=`), not in React. A
+filtered view is then a link that can be bookmarked or pasted into a bug
+report, Back works for free, and the pages stay Server Components so rows never
+enter the client bundle to be searched.
+
+🚨 **Filtering and sorting happen in memory on the server, not in Firestore,
+and that is a decision rather than a shortcut.** Firestore has no substring
+search — only a prefix range — and staff search by the word they remember, not
+by a record's first letter. Worse, a `where` filter plus an `orderBy` on a
+different field needs a composite index, and a missing index does not degrade:
+it throws `FAILED_PRECONDITION` at request time and takes the page down. Every
+filter × sort pair across five pages is a lot of indexes to get right, and none
+can be deployed from a machine without credentials. So each action fetches its
+collection with a `.select()` projection and the shared module does the rest.
+
+**The ceiling is written down**: `SCALE_CEILING` (20,000). `alert_zones` is the
+big one at 4,053. Past that number this has to become server-side paging —
+`orderBy` + `limit` + cursor, prefix-only search, and a `firestore.indexes.json`
+per filter × sort pair.
+
+Two things worth knowing before changing any of it:
+
+- **`listAlertZones` no longer orders server-side, and must not start again.**
+  `orderBy(field)` silently excludes documents missing that field — the bug
+  that hid all 61 price standards behind an empty table. Sorting is in memory
+  now, so a server-side order would be thrown away anyway.
+- **Blanks sort last in *both* directions.** A missing value is not a small
+  one; sorting 4,053 zones by a field most of them lack would otherwise fill
+  the first page with blanks, and reversing the arrow just moves the problem.
+  The check sits outside the direction factor for that reason, and
+  `list-query.test.ts` pins it — it was written the wrong way first.
+
+Empty states are conditional: "no rows match this search" and "nothing here
+yet" are different problems with different fixes, and telling somebody with
+4,053 zones and a typo to "create the first one" is actively misleading.
+
 ## 4. Auth & Firestore Access Strategy
 
 - **Login: Google Sign-In only** (Firebase Auth `GoogleAuthProvider`) — no email/password,

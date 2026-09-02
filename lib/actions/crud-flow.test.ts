@@ -73,8 +73,42 @@ function fakeFirestore() {
           },
         };
       };
+      /**
+       * `.select(...)` — a projection. Firestore returns documents carrying
+       * ONLY the named fields, and the fake does the same rather than handing
+       * back the whole document.
+       *
+       * 🚨 That fidelity is the point. A fake that ignored the projection
+       * would let `listAlertZones` read `data.description_en` — a field it no
+       * longer asks Firestore for — and pass here while returning undefined in
+       * production. The projection exists because there are 4,053 zones and
+       * the list draws four columns; a test that cannot see the difference
+       * cannot protect it.
+       *
+       * No `orderBy` is offered on top, deliberately: `listAlertZones` does
+       * not order server-side any more (ordering by a field drops documents
+       * that lack it), and a fake that supports a call the code must not make
+       * invites the call back.
+       */
+      const select = (...fields: string[]) => ({
+        async get() {
+          const entries = Object.keys(docs).map((id) => {
+            const full = docs[id]!;
+            const projected: Doc = {};
+            for (const field of fields) {
+              if (field in full) projected[field] = full[field];
+            }
+            return { id, data: projected };
+          });
+          return {
+            docs: entries.map((e) => ({ id: e.id, data: () => e.data })),
+          };
+        },
+      });
+
       return {
         orderBy: (field: string | FieldPath) => query(field),
+        select,
         doc(id: string) {
           return {
             async get() {
@@ -483,9 +517,25 @@ describe("the other two collections cross the same boundary", () => {
     store = {};
     expect(await saveAlertZone(zoneInput(), "create")).toEqual({ ok: true });
 
-    // Zone polygons are stored as GeoPoint — a class — and fromFirestore
-    // already converts them to { lat, lng }. This pins that conversion as a
-    // serialization requirement, not just a shape preference.
+    // 🚨 `getAlertZone`, not `listAlertZones`, and that changed on 2026-09-02.
+    //
+    // Zone polygons are stored as GeoPoint — a class — and `fromFirestore`
+    // converts them to plain `{ lat, lng }`. This pins that conversion as a
+    // serialization requirement, because the edit page hands the result
+    // straight to `<AlertZoneForm>`, a Client Component, and a class instance
+    // across that boundary throws "Only plain objects can be passed to Client
+    // Components".
+    //
+    // The list used to be the subject here. It no longer carries a polygon at
+    // all — it is projected down to the four columns the table draws — so
+    // asserting against it would have quietly stopped testing anything while
+    // still passing. The single path that still crosses the boundary with a
+    // GeoPoint in it is the one that has to be checked.
+    const zone = await getAlertZone("zz_test_zone");
+    expect(zone?.polygon?.[0]).toEqual({ lat: 13.75, lng: 100.5 });
+    assertPlainForClientComponent(zone);
+
+    // The list is still checked, for the narrower property that it is plain.
     assertPlainForClientComponent(await listAlertZones());
   });
 });
@@ -811,6 +861,25 @@ describe("alert_zones CRUD", () => {
         input[`description_${lang}`],
       );
     }
+  });
+
+  it("the list is projected down to the columns it draws", async () => {
+    // 🚨 4,053 live zones. The full document carries six descriptions and five
+    // optional names, none of which the table renders; at that row count the
+    // text is most of the payload. If someone drops the `.select()` to "fix" a
+    // missing field, this fails rather than the page merely getting slower —
+    // slower is the failure nobody files a bug for.
+    await saveAlertZone(zoneInput(), "create");
+    const [row] = await listAlertZones();
+
+    expect(Object.keys(row!).sort()).toEqual([
+      "id",
+      "name",
+      "point_count",
+      "radius_km",
+      "risk_level",
+    ]);
+    expect(row!.point_count).toBe(4);
   });
 
   it("writes every field the schema accepts", async () => {
