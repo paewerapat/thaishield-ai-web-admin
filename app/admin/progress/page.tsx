@@ -39,6 +39,16 @@ interface Phase {
   items: { label: string; done: boolean }[];
 }
 
+/**
+ * 🚨 Move this whenever anything else on this page changes.
+ *
+ * It read "30 August 2026" for four commits' worth of edits, and a status page
+ * that quietly goes stale is worse than none — people stop asking the
+ * developer and start trusting it. It is a named constant beside the content
+ * rather than a literal in the header so the two are edited in one place.
+ */
+const LAST_UPDATED = "2 September 2026";
+
 const PHASES: Phase[] = [
   {
     name: "Web Admin (this site)",
@@ -135,7 +145,7 @@ export default function ProgressPage() {
     <>
       <PageHeader
         title="Project Progress"
-        description="Status of each phase. Last updated 30 August 2026."
+        description={`Status of each phase. Last updated ${LAST_UPDATED}.`}
       />
 
       <div className="space-y-4">

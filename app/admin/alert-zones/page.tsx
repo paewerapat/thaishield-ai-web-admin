@@ -35,10 +35,16 @@ import { DESCRIPTION, TITLE } from "./meta";
 const BASE_PATH = "/admin/alert-zones";
 
 /**
- * 🚨 This is the page the search box was built for. There are **4,053 zones**,
- * and before 2026-09-02 this table rendered every one of them on every load —
- * no search, no paging, one `<tr>` per zone. Finding a zone to edit meant
- * Ctrl+F on a page several megabytes long.
+ * The largest of the five lists: **193 zones**, and before 2026-09-02 this
+ * table rendered every one of them on every load with no search and no paging,
+ * so finding a zone to edit meant Ctrl+F.
+ *
+ * 🚨 That count was recorded as 4,053 until the QA gate checked it on
+ * 2026-09-02. The developer's own counting script never advanced its page
+ * token and re-read the first page 21 times — 193 x 21 = 4,053. The wrong
+ * figure had reached this file, twelve others, and the argument put to the
+ * client for making four languages optional. **Re-derive a production count
+ * before quoting one; do not copy it from a comment.**
  */
 const LIST: ListConfig<AlertZoneListRow> = {
   // The id is searchable as well as the name because staff and the developer
@@ -54,7 +60,7 @@ const LIST: ListConfig<AlertZoneListRow> = {
       label: "Radius",
       get: (row) => row.radius_km,
       // Biggest first: a zone with an implausible radius is the one worth
-      // finding, and it is invisible at the bottom of 163 pages.
+      // finding, and it is invisible at the bottom of the last page.
       defaultDir: "desc",
     },
     { key: "points", label: "Points", get: (row) => row.point_count },
@@ -140,7 +146,7 @@ export default async function AlertZonesPage({
                     // An empty table after a search means something completely
                     // different from an empty collection, and the fix is
                     // different too. Saying "create the first one" to somebody
-                    // who has 4,053 zones and a typo in the search box is
+                    // who has 193 zones and a typo in the search box is
                     // actively misleading.
                     result.isFiltered
                       ? "No zones match this search. Try a different word, or clear the filters."

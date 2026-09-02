@@ -179,6 +179,11 @@ export default function GuidePage() {
                 the wording rules above matter most.
               </li>
               <li>
+                <strong>Thai and English are required.</strong> Chinese, Korean,
+                Russian and Japanese are optional — leave one blank and readers
+                of that language see the English text instead.
+              </li>
+              <li>
                 Keep the outline tight. Overlap a neighbouring street or
                 district and everyone standing there gets the advisory too.
               </li>
@@ -196,7 +201,7 @@ export default function GuidePage() {
         <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
           <p>
             Every list has a search box, filters, a sort control and pages.
-            There are <strong className="text-foreground">4,053 alert zones</strong>,
+            There are <strong className="text-foreground">193 alert zones</strong>,
             so scrolling is not a way to find one.
           </p>
           <p className="flex items-start gap-2">

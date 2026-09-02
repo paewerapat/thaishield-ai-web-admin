@@ -24,7 +24,7 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
     risk_level: data.risk_level,
     description_en: data.description_en,
     description_th: data.description_th,
-    // Optional since 2026-09-02, and empty is the normal case — all 4,053 live
+    // Optional since 2026-09-02, and empty is the normal case — all 193 live
     // zones have none of the four. They read back as "" so the form opens with
     // empty boxes rather than `undefined`, and the app falls back to English
     // for whichever are blank (`AlertZone.localizedDescription`).
@@ -42,7 +42,7 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
 /**
  * One row of the zone list — only what the table draws.
  *
- * Not `AlertZone`. There are 4,053 zones and the full document carries six
+ * Not `AlertZone`. There are 193 zones and the full document carries six
  * descriptions and five optional names, none of which the list renders; at
  * that row count the text is most of the payload. `point_count` is derived on
  * the server so the polygon itself never has to be serialised into the page.

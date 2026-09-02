@@ -176,9 +176,12 @@ function ThaiPolicy() {
 
       <Section heading="3. ข้อมูลที่แอปใช้ และใช้เพื่ออะไร">
         <p>
-          แอปขอสิทธิ์เข้าถึงข้อมูลต่อไปนี้ <strong>เฉพาะขณะที่คุณเปิดใช้งานฟีเจอร์นั้น ๆ</strong>{" "}
-          และขอเมื่อถึงเวลาที่ต้องใช้จริงเท่านั้น คุณปฏิเสธได้ทุกรายการ
-          โดยฟีเจอร์ที่ไม่เกี่ยวข้องยังใช้งานได้ตามปกติ
+          แอปขอสิทธิ์ <strong>ตำแหน่งที่ตั้ง กล้อง และไมโครโฟน</strong>{" "}
+          เฉพาะขณะที่คุณเปิดใช้งานฟีเจอร์นั้น ๆ และขอเมื่อถึงเวลาที่ต้องใช้จริงเท่านั้น{" "}
+          <strong>สามข้อนี้คุณปฏิเสธได้</strong> โดยฟีเจอร์ที่ไม่เกี่ยวข้องยังใช้งานได้ตามปกติ{" "}
+          ส่วนสองข้อท้าย (ภาษาที่เลือก และรหัสประจำการติดตั้ง){" "}
+          <strong>บันทึกอัตโนมัติเมื่อเปิดแอป และปิดในแอปไม่ได้</strong>{" "}
+          หากไม่ต้องการ ให้ถอนการติดตั้งแอป หรือขอให้เราลบข้อมูลตามข้อ 7
         </p>
         <Bullets
           items={[
@@ -209,7 +212,7 @@ function ThaiPolicy() {
               เมื่อเปิดแอป เราบันทึกรหัสสุ่มที่แอปสร้างขึ้นเองประจำการติดตั้งนั้น
               พร้อมกับวันที่เริ่มใช้งานครั้งแรก วันที่ใช้งานล่าสุด ระบบปฏิบัติการ
               เวอร์ชันของแอป ภาษาที่เลือก และสถานะ Premium
-              เพื่อให้ผู้ดูแลระบบทราบจำนวนผู้ใช้งานและช่วยตรวจสอบปัญหาการซื้อได้{" "}
+              เพื่อให้ผู้ดูแลระบบทราบจำนวนการติดตั้งแอปและช่วยตรวจสอบปัญหาการซื้อได้{" "}
               <strong>
                 รหัสนี้เป็นตัวเลขสุ่ม ไม่ได้มาจากหมายเลขเครื่อง หมายเลขโฆษณา หรือ IMEI
                 และไม่ผูกกับชื่อหรืออีเมลใด ๆ
@@ -361,9 +364,17 @@ function EnglishPolicy() {
 
       <Section heading="3. What the app uses, and what for">
         <p>
-          The app asks for the following <strong>only while you are using the
-          feature that needs it</strong>, and only at the point it is needed. You
-          may refuse any of them; unrelated features keep working.
+          The app asks for <strong>location, camera and microphone</strong> only
+          while you are using the feature that needs it, and only at the point it
+          is needed. <strong>Those three you may refuse</strong>, and unrelated
+          features keep working. The last two below — your language choice and
+          the installation identifier —{" "}
+          <strong>
+            are recorded automatically when the app opens and cannot be switched
+            off inside the app
+          </strong>
+          . Uninstalling stops them, and section 7 explains how to have an
+          existing record deleted.
         </p>
         <Bullets
           items={[
@@ -395,7 +406,7 @@ function EnglishPolicy() {
               that installation, together with the date you first used it, the
               date you last used it, your operating system, the app version, the
               language you chose, and whether Premium is active. This is what
-              tells the operator how many people are using the app and helps us
+              tells the operator how many installations there are and helps us
               investigate a purchase problem.{" "}
               <strong>
                 The identifier is a random number. It is not your device id, not

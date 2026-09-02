@@ -176,7 +176,7 @@ describe("sorting", () => {
 
   it("puts empty values last in BOTH directions", () => {
     // 🚨 A blank is a missing value, not a small one. `koh_larn` has no `seen`.
-    // Sorting a 4,053-row collection by a field most rows lack would otherwise
+    // Sorting a 193-row collection by a field most rows lack would otherwise
     // fill the first page with blanks — and reversing would do it at the other
     // end, so "just flip the direction" is not a workaround.
     const desc = applyListQuery(ROWS, parse({ sort: "seen", dir: "desc" }), CONFIG);
@@ -283,7 +283,7 @@ describe("crossing into the client", () => {
 describe("the scale ceiling", () => {
   it("is documented as a number, not a vibe", () => {
     // In-memory listing is right for thousands and wrong for hundreds of
-    // thousands. `alert_zones` is 4,053 today. If a collection passes this,
+    // thousands. `alert_zones` is 193 today. If a collection passes this,
     // the design has to change to server-side paging — see the file header.
     expect(SCALE_CEILING).toBeGreaterThan(4_053);
     expect(SCALE_CEILING).toBeLessThan(100_000);

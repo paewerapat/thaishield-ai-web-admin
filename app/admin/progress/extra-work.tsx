@@ -32,7 +32,7 @@ const DELIVERED_FREE = [
   {
     title: "Advisory text in all six languages",
     detail:
-      "Area advisories were written in Thai and English only, so four of the six languages the app offers showed English on the one screen that describes a real place. All six are now required in this admin.",
+      "Area advisories were written in Thai and English only, so four of the six languages the app offers showed English on the one screen that describes a real place. Thai and English are required in this admin; the other four are optional and fall back to English, after the 2 September decision to reverse a four-day requirement that would have locked all 193 existing zones against any edit until the translations existed.",
   },
   {
     title: "Official place names per language",

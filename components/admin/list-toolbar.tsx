@@ -60,7 +60,7 @@ export function ListToolbar({
 
   // 🚨 Debounced, and it matters more here than on a typical search box: every
   // keystroke that reaches the server is a full Firestore read of the
-  // collection (4,053 documents for alert zones). 300ms is long enough that
+  // collection (193 documents for alert zones). 300ms is long enough that
   // typing a word costs one query rather than eight.
   useEffect(() => {
     if (draft === lastPushed.current) return;

@@ -105,9 +105,9 @@ describe("advisory text: English and Thai are required, the rest optional", () =
   // goes: the app's first screen offers six languages as equals, so an
   // advisory that exists only in English leaves four of those readers with
   // text they may not read, on the one string that describes a real place.
-  // What killed it was that 4,053 live zones carry none of the four, so
+  // What killed it was that 193 live zones carry none of the four, so
   // requiring them locked the entire collection against any edit — a typo fix
-  // included — behind 16,212 translations nobody had written.
+  // included — behind 768 translations nobody had written.
   //
   // English and Thai stay required, and that is not arbitrary: English is the
   // fallback target (`AlertZone.localizedDescription`), so a blank English box
@@ -143,9 +143,9 @@ describe("advisory text: English and Thai are required, the rest optional", () =
   // --- the 2026-09-02 reversal ---------------------------------------------
   //
   // 🚨 These four were REQUIRED from 2026-08-29 to 2026-09-02. The client
-  // reversed it after the arithmetic came out: 4,053 live zones, none of them
+  // reversed it after the arithmetic came out: 193 live zones, none of them
   // carrying any of the four, and a requirement that locked every one of them
-  // against any edit at all until 16,212 translations were typed. Optional is
+  // against any edit at all until 768 translations were typed. Optional is
   // now the contract, and the app falls back to English.
   //
   // If a future change puts `.min(1)` back on any of them, these fail — which

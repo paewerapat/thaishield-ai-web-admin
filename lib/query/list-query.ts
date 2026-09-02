@@ -38,12 +38,13 @@
  * So each list action fetches its collection with a **projection** (Firestore
  * `.select()` — only the columns the table renders) and this module does the
  * rest. The read count is unchanged from before this feature existed; the
- * payload is much smaller, and the browser renders 25 rows instead of 4,053.
+ * payload is much smaller, and the browser renders 25 rows instead of 193.
  *
  * ## The ceiling, stated plainly
  *
  * This is right for collections in the thousands and wrong for collections in
- * the hundreds of thousands. `alert_zones` is the big one at 4,053 rows.
+ * the hundreds of thousands. `alert_zones` is the big one at 193 rows — well
+ * clear of the ceiling, so nothing here is close to needing the migration.
  * **If any collection here passes ~20,000 rows, this must become server-side
  * paging** — `orderBy` + `limit` + a cursor, prefix-only search, and a
  * `firestore.indexes.json` for each filter × sort pair. {@link SCALE_CEILING}
@@ -254,7 +255,7 @@ export function applyListQuery<T>(
       // belongs at the bottom whichever way the column is sorted. Folding it
       // into `compareValues` and multiplying by `factor` — which is what this
       // did first — flips the rule with the arrow: sorting `alert_zones` by a
-      // translation 4,053 rows do not have then fills the first page with
+      // translation 193 rows do not have then fills the first page with
       // blanks, and "just reverse it" moves the problem rather than fixing it.
       const aEmpty = isEmptyCell(av);
       const bEmpty = isEmptyCell(bv);

@@ -130,9 +130,12 @@ shopping, attraction, tourist_info`. They live in `PARTNER_LOCATION_TYPES`
   radius_km:      number,
   polygon:        array<GeoPoint>,  // area boundary points for map overlay
   risk_level:     string,      // "safe" | "caution" | "danger"
-  // All six REQUIRED since 2026-08-29. Saving an older zone fails until the
-  // four newer ones are filled — deliberate, and felt by whoever edits an old
-  // zone next rather than by whoever added the fields.
+  // en + th REQUIRED. zh/ko/ru/ja OPTIONAL since 2026-09-02 — the app falls
+  // back to English for a blank one (AlertZone.localizedDescription).
+  // They were required from 2026-08-29 to 2026-09-02; the client reversed it
+  // because 192 of the 193 live zones have none of the four, so requiring them
+  // locked every zone against any edit at all. See lib/schemas/alert-zones.ts
+  // for the full reasoning — do not restate it a third way.
   description_en: string,
   description_th: string,
   description_zh: string,
@@ -302,7 +305,7 @@ can be deployed from a machine without credentials. So each action fetches its
 collection with a `.select()` projection and the shared module does the rest.
 
 **The ceiling is written down**: `SCALE_CEILING` (20,000). `alert_zones` is the
-big one at 4,053. Past that number this has to become server-side paging —
+big one at 193. Past that number this has to become server-side paging —
 `orderBy` + `limit` + cursor, prefix-only search, and a `firestore.indexes.json`
 per filter × sort pair.
 
@@ -313,14 +316,14 @@ Two things worth knowing before changing any of it:
   that hid all 61 price standards behind an empty table. Sorting is in memory
   now, so a server-side order would be thrown away anyway.
 - **Blanks sort last in *both* directions.** A missing value is not a small
-  one; sorting 4,053 zones by a field most of them lack would otherwise fill
+  one; sorting 193 zones by a field most of them lack would otherwise fill
   the first page with blanks, and reversing the arrow just moves the problem.
   The check sits outside the direction factor for that reason, and
   `list-query.test.ts` pins it — it was written the wrong way first.
 
 Empty states are conditional: "no rows match this search" and "nothing here
 yet" are different problems with different fixes, and telling somebody with
-4,053 zones and a typo to "create the first one" is actively misleading.
+193 zones and a typo to "create the first one" is actively misleading.
 
 ## 4. Auth & Firestore Access Strategy
 

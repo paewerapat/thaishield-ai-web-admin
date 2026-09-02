@@ -81,7 +81,7 @@ function fakeFirestore() {
        * 🚨 That fidelity is the point. A fake that ignored the projection
        * would let `listAlertZones` read `data.description_en` — a field it no
        * longer asks Firestore for — and pass here while returning undefined in
-       * production. The projection exists because there are 4,053 zones and
+       * production. The projection exists because there are 193 zones and
        * the list draws four columns; a test that cannot see the difference
        * cannot protect it.
        *
@@ -864,7 +864,7 @@ describe("alert_zones CRUD", () => {
   });
 
   it("the list is projected down to the columns it draws", async () => {
-    // 🚨 4,053 live zones. The full document carries six descriptions and five
+    // 🚨 193 live zones. The full document carries six descriptions and five
     // optional names, none of which the table renders; at that row count the
     // text is most of the payload. If someone drops the `.select()` to "fix" a
     // missing field, this fails rather than the page merely getting slower —

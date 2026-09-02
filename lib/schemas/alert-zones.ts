@@ -78,14 +78,14 @@ export const alertZoneInputSchema = z
     // What that argument did not survive is the arithmetic. Requiring the four
     // means **no zone can be edited for any reason** — moving one polygon
     // point, fixing a typo — until four translations are typed. There are
-    // **4,053 live zones and not one of them has any of the four**, so the
+    // **193 live zones and only one of them has all four**, so the
     // requirement was not a nudge toward a backfill; it was a lock on the
-    // whole collection, 16,212 translations deep. Put to the client on
+    // whole collection, 768 translations deep. Put to the client on
     // 2026-09-02 with three options; they chose optional-plus-fallback.
     //
     // The gap is real and is not closed by this change: a Russian speaker
     // reading a zone still gets English. Closing it means someone translating
-    // 16,212 strings under the §10 wording rules — a content project, not a
+    // 768 strings under the §10 wording rules — a content project, not a
     // schema one. **Do not bulk-fill this with machine translation**: it is
     // the app making claims about a real place, and a mistranslated advisory
     // is the specific legal risk §10 exists to avoid.

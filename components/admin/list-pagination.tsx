@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * and with JavaScript still loading.
  *
  * 🚨 The count line always states the *filtered* total against the collection
- * total ("12 of 4,053"). A bare "12 results" over a search box is the number
+ * total ("12 of 193"). A bare "12 results" over a search box is the number
  * somebody repeats as the size of the collection.
  */
 export function ListPagination<T>({
