@@ -169,8 +169,8 @@ function ThaiPolicy() {
         </p>
         <p className="text-slate-600">
           หัวข้อนี้พูดถึง <strong>บัญชีผู้ใช้</strong> ไม่ใช่แพ็กเกจ Premium —
-          Premium ยังมีอยู่และเป็นแบบต่ออายุอัตโนมัติ ดูหัวข้อ 4
-          โดยการซื้อผูกกับบัญชีร้านค้าของคุณ ไม่ใช่บัญชีของแอปนี้
+          Premium ยังมีอยู่ (ดูหัวข้อ 4) โดยการซื้อผูกกับบัญชีร้านค้าของคุณ
+          ไม่ใช่บัญชีของแอปนี้
         </p>
       </Section>
 
@@ -229,10 +229,14 @@ function ThaiPolicy() {
           เราไม่เห็นและไม่เก็บเลขบัตรหรือข้อมูลการชำระเงินของคุณ
         </p>
         <p>
-          Premium จำหน่ายเป็น <strong>สมาชิกแบบต่ออายุอัตโนมัติ</strong>{" "}
-          ทั้งแบบรายสัปดาห์และรายเดือน ร้านค้าจะเรียกเก็บเงินผ่านบัญชี Google Play
-          หรือ Apple ID ของคุณ และต่ออายุให้อัตโนมัติจนกว่าคุณจะยกเลิก
-          การยกเลิกทำที่หน้าตั้งค่าการสมัครสมาชิกของร้านค้า ไม่ได้ทำในแอปนี้
+          Premium มีสองแบบ ได้แก่{" "}
+          <strong>สมาชิกรายเดือนแบบต่ออายุอัตโนมัติ</strong> และ{" "}
+          <strong>บัตรผ่าน 14 วันแบบจ่ายครั้งเดียว</strong>{" "}
+          ร้านค้าจะเรียกเก็บเงินผ่านบัญชี Google Play หรือ Apple ID ของคุณ
+          แผนรายเดือนจะต่ออายุให้อัตโนมัติจนกว่าคุณจะยกเลิก
+          โดยยกเลิกที่หน้าตั้งค่าการสมัครสมาชิกของร้านค้า ไม่ได้ทำในแอปนี้
+          ส่วนบัตรผ่าน 14 วันเรียกเก็บเงินครั้งเดียว ไม่ต่ออายุ
+          และไม่มีอะไรให้ยกเลิก
         </p>
         <p>
           เมื่อคุณสมัครสมาชิก เราบันทึกเพียง{" "}
@@ -426,10 +430,13 @@ function EnglishPolicy() {
           or store your card or payment details.
         </p>
         <p>
-          Premium is sold as an <strong>auto-renewing subscription</strong>,
-          weekly or monthly. The store charges your Google Play or Apple ID
-          account, renews it automatically until you cancel, and handles
-          cancellation in its own subscription settings — not in the app.
+          Premium comes in two plans: an{" "}
+          <strong>auto-renewing monthly subscription</strong> and a{" "}
+          <strong>one-time 14-day pass</strong>. The store charges your Google
+          Play or Apple ID account. The monthly plan renews automatically until
+          you cancel, and cancellation happens in the store&rsquo;s own
+          subscription settings — not in the app. The 14-day pass is charged
+          once, never renews, and has nothing to cancel.
         </p>
         <p>
           When you subscribe we record only{" "}

@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "เงื่อนไขการสมัครสมาชิก ThaiShield AI — การต่ออายุอัตโนมัติ การเรียกเก็บเงิน และการยกเลิก",
 };
 
-const LAST_UPDATED = "30 สิงหาคม 2026 / 30 August 2026";
+const LAST_UPDATED = "7 กันยายน 2026 / 7 September 2026";
 const CONTACT_EMAIL = "support@thaishieldapp.com";
 
 export default function TermsPage() {
@@ -97,11 +97,12 @@ function ThaiTerms() {
     <div>
       <h2 className="text-lg font-semibold text-slate-900">ภาษาไทย</h2>
 
-      <Section heading="1. แพ็กเกจสมาชิก">
+      <Section heading="1. แพ็กเกจ Premium">
         <p>
-          ThaiShield AI Premium จำหน่ายเป็น{" "}
-          <strong>สมาชิกแบบต่ออายุอัตโนมัติ</strong> สองแบบ ได้แก่{" "}
-          <strong>รายสัปดาห์</strong> และ <strong>รายเดือน</strong>{" "}
+          ThaiShield AI Premium มีสองแบบ และ{" "}
+          <strong>เก็บเงินคนละวิธี</strong> ได้แก่{" "}
+          <strong>สมาชิกรายเดือนแบบต่ออายุอัตโนมัติ</strong> และ{" "}
+          <strong>บัตรผ่าน 14 วันแบบจ่ายครั้งเดียว</strong>{" "}
           ราคาที่คุณต้องชำระจริงคือราคาที่แสดงใน Google Play หรือ App Store
           ของประเทศคุณ ซึ่งอาจต่างจากที่แสดงในแอปตามสกุลเงินและภาษี
         </p>
@@ -109,9 +110,16 @@ function ThaiTerms() {
 
       <Section heading="2. การเรียกเก็บเงินและการต่ออายุ">
         <p>
-          ระบบจะเรียกเก็บเงินผ่านบัญชี Google Play หรือ Apple ID
-          ที่คุณใช้สมัคร เมื่อครบกำหนดแต่ละรอบ
+          <strong>แผนรายเดือน</strong> ระบบจะเรียกเก็บเงินผ่านบัญชี Google Play
+          หรือ Apple ID ที่คุณใช้สมัคร เมื่อครบกำหนดแต่ละรอบ
           ระบบจะเรียกเก็บเงินรอบถัดไปโดยอัตโนมัติจนกว่าคุณจะยกเลิก
+        </p>
+        <p>
+          <strong>บัตรผ่าน 14 วัน</strong> เรียกเก็บเงินเพียงครั้งเดียว{" "}
+          <strong>ไม่มีการต่ออายุและไม่มีการเรียกเก็บเงินซ้ำ</strong>{" "}
+          โดยนับ 14 วันต่อเนื่องจากเวลาที่ซื้อ
+          ไม่หยุดนับระหว่างที่คุณไม่ได้ใช้แอป หากต้องการใช้ต่อ
+          คุณต้องซื้อบัตรผ่านใหม่ด้วยตัวเอง
         </p>
         <p>
           การชำระเงินทั้งหมดดำเนินการโดยร้านค้า{" "}
@@ -121,14 +129,20 @@ function ThaiTerms() {
 
       <Section heading="3. การยกเลิก">
         <p>
-          คุณยกเลิกได้ตลอดเวลาที่{" "}
+          แผนรายเดือนยกเลิกได้ตลอดเวลาที่{" "}
           <strong>หน้าตั้งค่าการสมัครสมาชิกของ Google Play หรือ App Store</strong>{" "}
           — ไม่ได้ยกเลิกในแอปนี้ เพราะร้านค้าเป็นผู้ดูแลการเรียกเก็บเงินทั้งหมด
         </p>
         <p>
           เมื่อยกเลิกแล้ว คุณยังใช้ฟีเจอร์ Premium
-          ได้ต่อจนครบรอบที่ชำระเงินไปแล้ว หลังจากนั้นแอปจะกลับไปใช้เวอร์ชันฟรี
-          โดยข้อมูลของคุณไม่ถูกลบ
+          ได้ต่อจนครบรอบที่ชำระเงินไปแล้ว
+        </p>
+        <p>
+          <strong>บัตรผ่าน 14 วันไม่มีอะไรให้ยกเลิก</strong>{" "}
+          เพราะจ่ายครั้งเดียวและไม่ต่ออายุ — สิทธิ์จะสิ้นสุดเองเมื่อครบ 14 วัน
+        </p>
+        <p>
+          เมื่อสิทธิ์สิ้นสุด แอปจะกลับไปใช้เวอร์ชันฟรี โดยข้อมูลของคุณไม่ถูกลบ
         </p>
       </Section>
 
@@ -145,9 +159,14 @@ function ThaiTerms() {
 
       <Section heading="5. การกู้คืนและการใช้ข้ามอุปกรณ์">
         <p>
-          การสมัครสมาชิกผูกกับบัญชี Google Play หรือ Apple ID ที่ใช้สมัคร
-          หากติดตั้งใหม่หรือเปลี่ยนเครื่องภายในระบบเดิม
-          กดกู้คืนการซื้อในแอปเพื่อใช้ต่อได้
+          การซื้อผูกกับบัญชี Google Play หรือ Apple ID ที่ใช้ซื้อ{" "}
+          <strong>แผนรายเดือน</strong> หากติดตั้งใหม่หรือเปลี่ยนเครื่องภายในระบบเดิม
+          กดกู้คืนการซื้อในแอปเพื่อใช้ต่อได้ทั้งบน Android และ iOS
+        </p>
+        <p>
+          <strong>บัตรผ่าน 14 วันกู้คืนได้บน Android เท่านั้น</strong>{" "}
+          บน iOS ระบบของ Apple ไม่ส่งการซื้อแบบใช้แล้วหมดไปกลับมาอีก
+          ดังนั้นหากลบแอปก่อนครบ 14 วัน วันที่เหลือจะหายไป
         </p>
         <p>
           <strong>สิทธิ์ไม่โอนข้ามระหว่าง Android และ iOS</strong>{" "}
@@ -180,22 +199,29 @@ function EnglishTerms() {
     <div>
       <h2 className="text-lg font-semibold text-slate-900">English</h2>
 
-      <Section heading="1. Subscription plans">
+      <Section heading="1. Premium plans">
         <p>
-          ThaiShield AI Premium is sold as an{" "}
-          <strong>auto-renewing subscription</strong> in two plans:{" "}
-          <strong>weekly</strong> and <strong>monthly</strong>. The price you
-          pay is the one shown in Google Play or the App Store for your country,
-          which may differ from the figure shown in the app because of currency
-          and tax.
+          ThaiShield AI Premium comes in two plans that are{" "}
+          <strong>charged differently</strong>: an{" "}
+          <strong>auto-renewing monthly subscription</strong> and a{" "}
+          <strong>one-time 14-day pass</strong>. The price you pay is the one
+          shown in Google Play or the App Store for your country, which may
+          differ from the figure shown in the app because of currency and tax.
         </p>
       </Section>
 
       <Section heading="2. Billing and renewal">
         <p>
-          Payment is charged to the Google Play or Apple ID account you
-          subscribe with. At the end of each period the next one is charged
-          automatically, until you cancel.
+          <strong>The monthly plan.</strong> Payment is charged to the Google
+          Play or Apple ID account you subscribe with. At the end of each period
+          the next one is charged automatically, until you cancel.
+        </p>
+        <p>
+          <strong>The 14-day pass.</strong> It is charged once and{" "}
+          <strong>never renews or charges you again</strong>. Its 14 days run
+          continuously from the time of purchase and do not pause while you are
+          not using the app. To carry on afterwards you buy another pass
+          yourself.
         </p>
         <p>
           All payments are handled by the store.{" "}
@@ -207,16 +233,21 @@ function EnglishTerms() {
 
       <Section heading="3. Cancellation">
         <p>
-          You can cancel at any time in the{" "}
+          The monthly plan can be cancelled at any time in the{" "}
           <strong>
             subscription settings of Google Play or the App Store
           </strong>{" "}
-          — not in this app, because the store handles all billing.
+          — not in this app, because the store handles all billing. After
+          cancelling you keep Premium until the end of the period you have
+          already paid for.
         </p>
         <p>
-          After cancelling you keep Premium until the end of the period you have
-          already paid for. The app then returns to the free version and none of
-          your data is deleted.
+          <strong>The 14-day pass has nothing to cancel</strong>: it is bought
+          once and does not renew, so it simply ends after its 14 days.
+        </p>
+        <p>
+          When access ends the app returns to the free version and none of your
+          data is deleted.
         </p>
       </Section>
 
@@ -232,9 +263,14 @@ function EnglishTerms() {
 
       <Section heading="5. Restoring and using on another device">
         <p>
-          Your subscription is tied to the Google Play or Apple ID account you
-          subscribe with. Within the same platform you can restore it in the app
-          after reinstalling or moving to a new phone.
+          A purchase is tied to the Google Play or Apple ID account you buy
+          with. <strong>The monthly plan</strong> can be restored in the app
+          after reinstalling or moving to a new phone, on both Android and iOS.
+        </p>
+        <p>
+          <strong>The 14-day pass can be restored on Android only.</strong>{" "}
+          Apple does not replay a used-up purchase, so on iOS deleting the app
+          before the 14 days are up loses the remaining days.
         </p>
         <p>
           <strong>

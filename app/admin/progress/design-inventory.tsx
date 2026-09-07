@@ -130,19 +130,19 @@ const GROUPS: Group[] = [
       {
         name: "฿99 monthly",
         state: "changed",
-        note: "Now a $10 auto-renewing monthly subscription, sold beside a $3.50 weekly one. It became a one-time 30-day pass on 22 Aug and went back to a subscription on 30 Aug, at the client’s request both times. The short plan is weekly rather than a fortnight because neither store sells a 14-day billing period.",
+        note: "Now a $10 auto-renewing monthly subscription, sold beside a $3.50 one-time 14-day pass. The plans have changed type three times at the client’s request: one-time passes on 22 Aug, both subscriptions on 30 Aug, and the short plan back to a 14-day pass on 7 Sep. It has to be a pass because no store sells a 14-day period — not as a subscription, and not as a rental either.",
       },
       { name: "฿799 yearly", state: "dropped", note: "Cancelled by the client." },
       { name: "฿1,999 lifetime", state: "dropped", note: "Cancelled by the client." },
       {
         name: "7-day free trial",
         state: "changed",
-        note: "Now 3 days, at the client’s request. Granted by the app for the moment; once payments are live it moves to the store’s own introductory offer, which a subscription can carry and a one-time pass could not.",
+        note: "Now 3 days, at the client’s request. Granted by the app. A store introductory offer can only hang off the monthly subscription — a one-time pass cannot carry one — so if it moves to the store, the 14-day pass keeps the in-app trial and the two plans stop behaving alike.",
       },
       {
         name: "“Cancel anytime”",
         state: "shipped",
-        note: "True as of 30 Aug. Both plans became auto-renewing subscriptions, so there is a renewal to cancel — done in the store’s subscription settings, not in the app. Between 22 and 30 Aug this was marked as not applicable, because one-time passes have nothing to cancel.",
+        note: "True of the monthly plan only, since 7 Sep. It renews, so there is a renewal to cancel — in the store’s subscription settings, not in the app. The 14-day pass is bought once and has nothing to cancel, so the paywall names each plan rather than repeating the poster’s blanket promise.",
       },
     ],
   },
@@ -202,13 +202,14 @@ export function DesignInventory() {
         </p>
         <p className="mt-2 max-w-[68ch] text-sm text-muted-foreground">
           <strong className="text-foreground">
-            Updated 30 August: the plans are subscriptions again.
+            Updated 7 September: the two plans no longer share a billing model.
           </strong>{" "}
-          Weekly at $3.50 and monthly at $10, both auto-renewing and cancellable
-          in the store. They were one-time passes between 22 and 30 August. Two
-          things follow: “cancel anytime” from the poster is now accurate rather
-          than impossible, and restoring a purchase works on iPhone as well as
-          Android, which it could not while they were one-time passes.
+          A $10 monthly subscription that auto-renews and is cancellable in the
+          store, beside a $3.50 one-time pass that runs 14 days and does not
+          renew. Two things follow, and both are per-plan rather than blanket:
+          “cancel anytime” from the poster is true of the monthly and meaningless
+          for the pass, and restoring a purchase works on iPhone for the monthly
+          but not for the pass — Apple never replays a used-up purchase.
         </p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
           {(
