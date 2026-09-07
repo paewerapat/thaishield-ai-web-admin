@@ -5,6 +5,7 @@ import { DeleteRowButton } from "@/components/admin/delete-row-button";
 import { ListPagination } from "@/components/admin/list-pagination";
 import { ListToolbar } from "@/components/admin/list-toolbar";
 import { PageHeader } from "@/components/admin/page-header";
+import { PendingTranslationBadge } from "@/components/admin/pending-translation-note";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { TableEmptyState } from "@/components/admin/table-empty-state";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,17 @@ const LIST: ListConfig<PriceStandard> = {
         label: value,
       })),
       get: (row) => row.category,
+    },
+    {
+      // Lets a reviewer pull up every row still carrying an unread machine
+      // translation instead of paging through 61 items looking for badges.
+      key: "translations",
+      label: "Translations",
+      options: [
+        { value: "pending", label: "pending review" },
+        { value: "reviewed", label: "all reviewed" },
+      ],
+      get: (row) => (row.mt_pending.length > 0 ? "pending" : "reviewed"),
     },
   ],
   defaultSort: "name",
@@ -139,7 +151,10 @@ export default async function PriceStandardsPage({
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {item.id}
                   </TableCell>
-                  <TableCell className="font-medium">{item.name_en}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.name_en}
+                    <PendingTranslationBadge count={item.mt_pending.length} />
+                  </TableCell>
                   <TableCell>
                     <StatusBadge value={item.category} tone="neutral" />
                   </TableCell>

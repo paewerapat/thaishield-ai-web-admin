@@ -9,6 +9,21 @@ export type AlertZoneRiskLevel = (typeof ALERT_ZONE_RISK_LEVELS)[number];
 
 const idPattern = /^[a-z0-9_]+$/;
 
+/**
+ * The description fields the auto-translate button may fill, and therefore
+ * the only values `mt_pending` may hold. Names are deliberately absent: a
+ * place name is not translated, it is looked up (`OptionalNameFields`), and
+ * the button is not offered for them. See WEB_ADMIN.md §3.12.
+ */
+export const ALERT_ZONE_TRANSLATABLE_FIELDS = [
+  "description_th",
+  "description_en",
+  "description_zh",
+  "description_ko",
+  "description_ru",
+  "description_ja",
+] as const;
+
 const latLngSchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
@@ -86,15 +101,31 @@ export const alertZoneInputSchema = z
     // The gap is real and is not closed by this change: a Russian speaker
     // reading a zone still gets English. Closing it means someone translating
     // 768 strings under the §10 wording rules — a content project, not a
-    // schema one. **Do not bulk-fill this with machine translation**: it is
-    // the app making claims about a real place, and a mistranslated advisory
-    // is the specific legal risk §10 exists to avoid.
+    // schema one.
+    //
+    // **Machine translation is allowed only through the form's auto-translate
+    // button, and only as a draft.** Each filled field is recorded in
+    // `mt_pending` below, and `AlertZone.localizedDescription` in the app
+    // keeps showing English for a pending language until a person marks it
+    // reviewed in the CMS. The rule that a tourist never reads an advisory no
+    // person has read still holds; the button just moves the typing to the
+    // machine and leaves the reading to the human. Do not write a script that
+    // bulk-fills the four columns and skips the flag — that is the "bulk
+    // machine translation" the client was warned against on 2026-09-02, and a
+    // mistranslated advisory is the specific legal risk §10 exists to avoid.
     description_en: z.string().trim().min(1, "English description is required"),
     description_th: z.string().trim().min(1, "Thai description is required"),
     description_zh: z.string().trim().default(""),
     description_ko: z.string().trim().default(""),
     description_ru: z.string().trim().default(""),
     description_ja: z.string().trim().default(""),
+    // Which description fields are machine translated and unreviewed. Empty
+    // for every zone written before 2026-09-06 and for every field a person
+    // typed. A field listed here must not be shown to a tourist; the app falls
+    // back to English for it exactly as it does for a blank one.
+    mt_pending: z
+      .array(z.enum(ALERT_ZONE_TRANSLATABLE_FIELDS))
+      .default([]),
   })
   .superRefine((data, ctx) => {
     const enIssue = wordingIssueMessage(data.description_en);

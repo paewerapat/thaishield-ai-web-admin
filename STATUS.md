@@ -64,6 +64,13 @@ through the CMS (F2 live data), and deploy `syncTravelAlerts` (F7).
 
 ## Built, but unverified — needs real secrets + live testing
 
+- **Auto-translate button + `mt_pending` review gate (2026-09-06, WEB_ADMIN.md §3.12).**
+  Code, tests, tsc, lint and build are green. **Not yet exercised against the
+  real API**: Cloud Translation is not enabled on the project and the runtime
+  service account has no `roles/cloudtranslate.user` yet — both are console
+  steps, listed in §3.12. Until then the button returns the error that names
+  the missing step, which is the intended behaviour, not a bug.
+
 These are implemented per spec but can only be exercised once Firebase
 project credentials exist. None of this blocks continued development; it's
 what to smoke-test first once secrets are in place.

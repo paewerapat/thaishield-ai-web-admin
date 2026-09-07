@@ -32,6 +32,9 @@ function fromFirestore(id: string, data: FirebaseFirestore.DocumentData): AlertZ
     description_ko: data.description_ko ?? "",
     description_ru: data.description_ru ?? "",
     description_ja: data.description_ja ?? "",
+    // Absent on every zone written before 2026-09-06; absent means nothing is
+    // waiting for review.
+    mt_pending: Array.isArray(data.mt_pending) ? data.mt_pending : [],
     polygon: polygon.map((p) => ({ lat: p.latitude, lng: p.longitude })),
     center_lat: data.center_lat,
     center_lng: data.center_lng,
@@ -53,6 +56,8 @@ export interface AlertZoneListRow {
   risk_level: string;
   radius_km: number;
   point_count: number;
+  /** How many description fields are machine translated and unreviewed. */
+  pending_count: number;
 }
 
 export async function listAlertZones(): Promise<AlertZoneListRow[]> {
@@ -74,7 +79,7 @@ export async function listAlertZones(): Promise<AlertZoneListRow[]> {
   // `.select()` keeps the six descriptions and five names out of the response.
   const snapshot = await getAdminFirestore()
     .collection(COLLECTION)
-    .select("name", "risk_level", "radius_km", "polygon")
+    .select("name", "risk_level", "radius_km", "polygon", "mt_pending")
     .get();
 
   return snapshot.docs.map((doc) => {
@@ -89,6 +94,7 @@ export async function listAlertZones(): Promise<AlertZoneListRow[]> {
       // whole page down over one bad row.
       radius_km: (data.radius_km as number | undefined) ?? 0,
       point_count: polygon.length,
+      pending_count: Array.isArray(data.mt_pending) ? data.mt_pending.length : 0,
     };
   });
 }

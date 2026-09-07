@@ -12,6 +12,22 @@ export type PriceStandardCategory = (typeof PRICE_STANDARD_CATEGORIES)[number];
 
 const idPattern = /^[a-z0-9_]+$/;
 
+/**
+ * The name fields the auto-translate button may fill, and therefore the only
+ * values `mt_pending` may hold. A pending entry means "this text came from
+ * Cloud Translation and no person has read it yet" — the app then shows the
+ * English name for that language instead (`PriceStandard.localizedName`).
+ * See WEB_ADMIN.md §3.12.
+ */
+export const PRICE_STANDARD_TRANSLATABLE_FIELDS = [
+  "name_th",
+  "name_en",
+  "name_zh",
+  "name_ko",
+  "name_ru",
+  "name_ja",
+] as const;
+
 export const priceStandardInputSchema = z
   .object({
     id: z
@@ -39,6 +55,12 @@ export const priceStandardInputSchema = z
     category: z.enum(PRICE_STANDARD_CATEGORIES, {
       error: `Category must be one of: ${PRICE_STANDARD_CATEGORIES.join(", ")}`,
     }),
+    // Field names whose text is machine translated and unreviewed. Defaults to
+    // empty so the 61 seeded documents, which predate the field, parse as
+    // "all reviewed" — which is true, a person typed every one of them.
+    mt_pending: z
+      .array(z.enum(PRICE_STANDARD_TRANSLATABLE_FIELDS))
+      .default([]),
   })
   .refine((data) => data.max_price >= data.min_price, {
     message: "Maximum price must be greater than or equal to minimum price",

@@ -80,6 +80,9 @@ app's `FirestoreService`.
   min_price:  number,          // THB
   max_price:  number,          // THB
   category:   string,          // "food" | "transport" | "attraction"
+  mt_pending: array<string>,   // name_* fields that are machine translated and
+                               // not yet reviewed by a person — §3.12. Absent
+                               // on every document written before 2026-09-06.
   updated_at: timestamp
 }
 ```
@@ -150,7 +153,11 @@ shopping, attraction, tourist_info`. They live in `PARTNER_LOCATION_TYPES`
   name_zh:        string,
   name_ko:        string,
   name_ru:        string,
-  name_ja:        string
+  name_ja:        string,
+  // description_* fields that are machine translated and not yet reviewed by
+  // a person — §3.12. Absent on every zone written before 2026-09-06. The app
+  // shows English for a listed language exactly as it does for a blank one.
+  mt_pending:     array<string>
 }
 ```
 Admin screen: this is the highest-effort item (2,500 THB) — an **interactive polygon editor**
@@ -282,6 +289,70 @@ The regression guard is **`writes every field the schema accepts`** in
 parsed result exists in the stored document. It fails for the *next* field
 somebody adds and forgets to persist, with nobody having to remember to extend
 the test. Add the equivalent to any new module.
+
+## 3.12 Auto-translate with a review gate — `mt_pending` (added 2026-09-06)
+
+**The question it answers.** Staff were typing six languages by hand for every
+name and every advisory, and asked what happens at ten or twenty languages. The
+answer other apps give is the same one built here: a machine fills the boxes, a
+person reads them, and nothing reaches the tourist in between.
+
+**What exists.**
+
+- `lib/translation/cloud-translation.ts` — Google Cloud Translation **v3**, plain
+  `fetch` with an injected token, so the request shape and the error mapping are
+  unit-tested without a network. The app's `zh` is sent as `zh-CN` (Simplified),
+  which is what every existing `name_zh` and ARB string is.
+- `lib/actions/translate.ts` — the Server Action. `requireAdminSession()` first,
+  like every other action. It **returns** translations and writes nothing; the
+  form decides what to keep and Save is still the only write path.
+- `<TranslateButton>` (`components/admin/translate-button.tsx`) — "Auto-translate
+  empty (N)". Source is Thai if filled, else English. **It never overwrites a
+  filled box**: a filled box is a person's work. Offered in two places only —
+  the price-standard **Names** card and the alert-zone **Description** card.
+  Not on `OptionalNameFields`: a place name is looked up, not translated, and
+  that component says so on screen.
+- `mt_pending: string[]` on both documents — the field names the button filled
+  that no person has read yet. Validated as an enum of that form's translatable
+  fields (`PRICE_STANDARD_TRANSLATABLE_FIELDS`, `ALERT_ZONE_TRANSLATABLE_FIELDS`),
+  so a typo can never produce a flag the app does not read. Persisted by the
+  normal `...parsed` spread (§3.10); read back with `?? []` so the 61 dishes and
+  193 zones that predate it parse as "nothing pending".
+- `<PendingTranslationNote>` under each flagged box, with **Mark reviewed**.
+  Editing the text also clears the flag — a correction is a review. There is no
+  bulk "mark all": the flag exists so that someone looked at each one.
+- List pages badge rows with `N pending review` and offer a **Translations**
+  filter (pending / all reviewed), so a reviewer can pull up the backlog.
+
+**The gate is enforced in the app, not here.** `AlertZone.localizedDescription`
+and `PriceStandard.localizedName` in the Flutter repo treat a language listed in
+`mt_pending` as blank and fall back to English. That is the whole safety
+argument: the CMS may hold an unreviewed machine translation, a tourist never
+sees one. Both repos pin it with tests (`alert_zone_fallback_test.dart`,
+`price_standard_localized_name_test.dart`, `crud-flow.test.ts`). If you ever
+rename the field, rename it in both repos in the same hour.
+
+**What it does not do.** `lib/legal-wording.ts` still recognises English terms
+only, and it runs on every description box pending or not (§5). A §10 violation
+*inside* a Chinese, Korean, Russian or Japanese sentence is invisible to it, which
+is exactly why the human review step is not optional and why the app hides the
+text until it happens. Adding term tables for the other four languages is open
+work, not a ten-minute task — the Thai table alone was declined in the past for
+lack of a reviewer.
+
+**One-time setup, per project (not done by code):**
+
+1. Enable the API: <https://console.cloud.google.com/apis/library/translate.googleapis.com?project=thaishield-ai-790eb>.
+   Until then the button fails with an error that names this step.
+2. Grant the App Hosting runtime service account
+   (`firebase-app-hosting-compute@thaishield-ai-790eb.iam.gserviceaccount.com`)
+   the role **Cloud Translation API User** (`roles/cloudtranslate.user`) in IAM.
+   Locally, the ADC user or the optional service-account key needs the same role.
+3. Nothing else: no new secret, no new env var. The token comes from the same
+   credential `lib/firebase/admin.ts` already resolves (§10.2).
+
+Cost is negligible at this scale — v3 is priced per million characters, and the
+whole 768-string zone backlog is under one dollar.
 
 ## 3.11 Search, filter, sort and pagination (added 2026-09-02)
 
@@ -544,6 +615,12 @@ This is also the only path that works when the GCP organization enforces
 since mid-2024) — under that policy the Firebase Console refuses to generate a key at all,
 failing with *"Key creation is not allowed on this service account."* The env var is still
 honoured if present, so an existing key keeps working, but new setups should skip it.
+
+**Cloud Translation (the auto-translate button, §3.12) reuses this credential.**
+It needs two one-time console actions and no secret: enable
+`translate.googleapis.com` on the project, and grant the App Hosting runtime
+service account `roles/cloudtranslate.user`. Until the first is done the button
+returns a message naming the step; until the second, a 403 naming the role.
 
 **Everything else lives in `apphosting.yaml`,** which is committed. Each entry declares
 `availability: [BUILD, RUNTIME]`, because Next.js inlines `NEXT_PUBLIC_*` into the browser

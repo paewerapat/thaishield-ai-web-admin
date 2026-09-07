@@ -236,3 +236,37 @@ describe("optional names in other languages", () => {
     expect(result.name_ko).toBe("");
   });
 });
+
+describe("machine-translation review flag", () => {
+  it("defaults mt_pending to empty and accepts only description fields in it", () => {
+    const bare = alertZoneInputSchema.safeParse(validInput());
+    expect(bare.success && bare.data.mt_pending).toEqual([]);
+
+    const flagged = alertZoneInputSchema.safeParse(
+      validInput({ mt_pending: ["description_zh", "description_ru"] }),
+    );
+    expect(flagged.success && flagged.data.mt_pending).toEqual([
+      "description_zh",
+      "description_ru",
+    ]);
+
+    // Names are looked up, never translated (OptionalNameFields), so a name
+    // can never be "pending review" — and a typo'd field name would be a flag
+    // the app never reads.
+    expect(
+      alertZoneInputSchema.safeParse(validInput({ mt_pending: ["name_zh"] })).success,
+    ).toBe(false);
+  });
+
+  it("still runs the wording check on a machine-translated description", () => {
+    // The translator can hand back an English phrase inside the Japanese box.
+    // Pending or not, a §7 term in any of the six boxes blocks the save.
+    const result = alertZoneInputSchema.safeParse(
+      validInput({
+        description_ja: "This is a tourist trap.",
+        mt_pending: ["description_ja"],
+      }),
+    );
+    expect(result.success).toBe(false);
+  });
+});

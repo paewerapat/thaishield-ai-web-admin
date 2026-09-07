@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
+import { PendingTranslationNote } from "@/components/admin/pending-translation-note";
+import {
+  TranslateButton,
+  type TranslatableField,
+} from "@/components/admin/translate-button";
 import {
   OptionalNameFields,
   type NameLanguageField,
@@ -45,13 +50,23 @@ import {
  * and a field nobody sees is a field nobody fills.
  */
 const DESCRIPTION_LANGUAGES = [
-  { field: "description_th", label: "Thai", required: true },
-  { field: "description_en", label: "English", required: true },
-  { field: "description_zh", label: "Chinese (中文)", required: false },
-  { field: "description_ko", label: "Korean (한국어)", required: false },
-  { field: "description_ru", label: "Russian (Русский)", required: false },
-  { field: "description_ja", label: "Japanese (日本語)", required: false },
+  { field: "description_th", label: "Thai", required: true, lang: "th" },
+  { field: "description_en", label: "English", required: true, lang: "en" },
+  { field: "description_zh", label: "Chinese (中文)", required: false, lang: "zh" },
+  { field: "description_ko", label: "Korean (한국어)", required: false, lang: "ko" },
+  { field: "description_ru", label: "Russian (Русский)", required: false, lang: "ru" },
+  { field: "description_ja", label: "Japanese (日本語)", required: false, lang: "ja" },
 ] as const;
+
+type DescriptionField = (typeof DESCRIPTION_LANGUAGES)[number]["field"];
+
+const TRANSLATABLE: TranslatableField[] = DESCRIPTION_LANGUAGES.map((l) => ({
+  lang: l.lang,
+  field: l.field,
+  label: l.label,
+}));
+// Thai first, English second — the two a staff member writes by hand.
+const TRANSLATE_SOURCES = [TRANSLATABLE[0]!, TRANSLATABLE[1]!];
 
 function toFieldValues(input?: AlertZoneInput) {
   return {
@@ -100,6 +115,12 @@ export function AlertZoneForm({
 }) {
   const router = useRouter();
   const [values, setValues] = useState(toFieldValues(initial));
+  // Description fields whose text came from the auto-translate button and has
+  // not been read by a person. Merged into the submit payload; the app shows
+  // English for these until they are reviewed (WEB_ADMIN.md §3.12).
+  const [pending, setPending] = useState<DescriptionField[]>(
+    () => initial?.mt_pending ?? [],
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -109,13 +130,32 @@ export function AlertZoneForm({
     value: (typeof values)[K],
   ) {
     setValues((prev) => ({ ...prev, [key]: value }));
+    // Editing a machine translation is a review — the person read it and
+    // changed it — so the flag comes off and the app starts showing it.
+    setPending((prev) => prev.filter((f) => f !== key));
+  }
+
+  function markReviewed(field: DescriptionField) {
+    setPending((prev) => prev.filter((f) => f !== field));
+  }
+
+  function applyTranslations(filled: Record<string, string>) {
+    setValues((prev) => ({ ...prev, ...filled }));
+    setPending((prev) => {
+      const next = new Set(prev);
+      for (const field of Object.keys(filled)) next.add(field as DescriptionField);
+      return Array.from(next);
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    const parsed = alertZoneInputSchema.safeParse(values);
+    const parsed = alertZoneInputSchema.safeParse({
+      ...values,
+      mt_pending: pending,
+    });
     if (!parsed.success) {
       const errors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -152,7 +192,15 @@ export function AlertZoneForm({
         : `Saved “${parsed.data.name}”`,
       {
         description:
-          "Centre and radius were recalculated from the polygon you drew.",
+          parsed.data.mt_pending.length > 0
+            ? `${parsed.data.mt_pending.length} machine-translated ${
+                parsed.data.mt_pending.length === 1
+                  ? "description is"
+                  : "descriptions are"
+              } pending review — tourists see English for ${
+                parsed.data.mt_pending.length === 1 ? "it" : "them"
+              } until reviewed. Centre and radius were recalculated from the polygon.`
+            : "Centre and radius were recalculated from the polygon you drew.",
       },
     );
     router.push("/admin/alert-zones");
@@ -224,12 +272,23 @@ export function AlertZoneForm({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Description</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Tourists read this. Keep it neutral and informational — describe the
-            situation, never judge a place or business.
-          </p>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle className="text-base">Description</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Tourists read this. Keep it neutral and informational — describe
+              the situation, never judge a place or business. Auto-translated
+              text is a draft: tourists keep seeing English for that language
+              until someone reads it and marks it reviewed.
+            </p>
+          </div>
+          <TranslateButton
+            sources={TRANSLATE_SOURCES}
+            targets={TRANSLATABLE}
+            values={values}
+            onTranslated={applyTranslations}
+            disabled={submitting}
+          />
         </CardHeader>
         <CardContent className="space-y-4">
           {DESCRIPTION_LANGUAGES.map(({ field, label, required }) => (
@@ -250,6 +309,9 @@ export function AlertZoneForm({
                 onChange={(e) => update(field, e.target.value)}
               />
               <WordingHint text={values[field]} />
+              {pending.includes(field) && (
+                <PendingTranslationNote onReviewed={() => markReviewed(field)} />
+              )}
             </FormField>
           ))}
         </CardContent>

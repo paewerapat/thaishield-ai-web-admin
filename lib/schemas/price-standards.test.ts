@@ -23,6 +23,22 @@ describe("priceStandardInputSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("defaults mt_pending to an empty list and accepts only name fields in it", () => {
+    const bare = priceStandardInputSchema.safeParse(validInput());
+    expect(bare.success && bare.data.mt_pending).toEqual([]);
+
+    const flagged = priceStandardInputSchema.safeParse(
+      validInput({ mt_pending: ["name_ko", "name_ja"] }),
+    );
+    expect(flagged.success && flagged.data.mt_pending).toEqual(["name_ko", "name_ja"]);
+
+    // A flag on a field the app never localises would be silently meaningless,
+    // so it is rejected rather than stored.
+    expect(
+      priceStandardInputSchema.safeParse(validInput({ mt_pending: ["category"] })).success,
+    ).toBe(false);
+  });
+
   it("coerces string prices from a form input", () => {
     const result = priceStandardInputSchema.safeParse(
       validInput({ min_price: "40", max_price: "80" }),

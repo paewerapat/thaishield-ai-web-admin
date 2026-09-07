@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { FormField } from "@/components/admin/form-field";
+import { PendingTranslationNote } from "@/components/admin/pending-translation-note";
+import {
+  TranslateButton,
+  type TranslatableField,
+} from "@/components/admin/translate-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,13 +64,23 @@ function toFieldValues(input?: PriceStandardInput): FieldValues {
 
 /** The six localized names, rendered as a grid rather than six stacked rows. */
 const NAME_FIELDS = [
-  { name: "name_en", label: "English" },
-  { name: "name_th", label: "Thai" },
-  { name: "name_zh", label: "Chinese" },
-  { name: "name_ko", label: "Korean" },
-  { name: "name_ru", label: "Russian" },
-  { name: "name_ja", label: "Japanese" },
+  { name: "name_en", label: "English", lang: "en" },
+  { name: "name_th", label: "Thai", lang: "th" },
+  { name: "name_zh", label: "Chinese", lang: "zh" },
+  { name: "name_ko", label: "Korean", lang: "ko" },
+  { name: "name_ru", label: "Russian", lang: "ru" },
+  { name: "name_ja", label: "Japanese", lang: "ja" },
 ] as const;
+
+type NameField = (typeof NAME_FIELDS)[number]["name"];
+
+const TRANSLATABLE: TranslatableField[] = NAME_FIELDS.map((f) => ({
+  lang: f.lang,
+  field: f.name,
+  label: f.label,
+}));
+// Thai first: it is what a Thai staff member types; English second.
+const TRANSLATE_SOURCES = [TRANSLATABLE[1]!, TRANSLATABLE[0]!];
 
 export function PriceStandardForm({
   mode,
@@ -76,19 +91,44 @@ export function PriceStandardForm({
 }) {
   const router = useRouter();
   const [values, setValues] = useState<FieldValues>(toFieldValues(initial));
+  // Name fields whose text came from the auto-translate button and has not
+  // been read by a person. Kept apart from `values` (all strings) and merged
+  // back in at submit; the schema validates and the action persists it.
+  const [pending, setPending] = useState<NameField[]>(
+    () => initial?.mt_pending ?? [],
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function updateField(name: keyof FieldValues, value: string) {
     setValues((prev) => ({ ...prev, [name]: value }));
+    // Editing a machine translation is a review: the person read it and
+    // changed it. Clear the flag so the app starts showing this language.
+    setPending((prev) => prev.filter((f) => f !== name));
+  }
+
+  function markReviewed(name: NameField) {
+    setPending((prev) => prev.filter((f) => f !== name));
+  }
+
+  function applyTranslations(filled: Record<string, string>) {
+    setValues((prev) => ({ ...prev, ...filled }));
+    setPending((prev) => {
+      const next = new Set(prev);
+      for (const field of Object.keys(filled)) next.add(field as NameField);
+      return Array.from(next);
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    const parsed = priceStandardInputSchema.safeParse(values);
+    const parsed = priceStandardInputSchema.safeParse({
+      ...values,
+      mt_pending: pending,
+    });
     if (!parsed.success) {
       const errors: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -122,11 +162,21 @@ export function PriceStandardForm({
       return;
     }
 
+    const pendingCount = parsed.data.mt_pending.length;
     toast.success(
       mode === "create"
         ? `Added “${parsed.data.name_en}”`
         : `Saved “${parsed.data.name_en}”`,
-      { description: "The ThaiShield app picks this up on its next read." },
+      {
+        description:
+          pendingCount > 0
+            ? `${pendingCount} machine-translated ${
+                pendingCount === 1 ? "name is" : "names are"
+              } pending review — the app shows English for ${
+                pendingCount === 1 ? "it" : "them"
+              } until reviewed.`
+            : "The ThaiShield app picks this up on its next read.",
+      },
     );
     router.push("/admin/price-standards");
     router.refresh();
@@ -183,8 +233,21 @@ export function PriceStandardForm({
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Names</CardTitle>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle className="text-base">Names</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Type Thai or English, then auto-translate the rest. Translated
+              names stay hidden from tourists until you mark them reviewed.
+            </p>
+          </div>
+          <TranslateButton
+            sources={TRANSLATE_SOURCES}
+            targets={TRANSLATABLE}
+            values={values}
+            onTranslated={applyTranslations}
+            disabled={submitting}
+          />
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           {NAME_FIELDS.map((field) => (
@@ -199,6 +262,11 @@ export function PriceStandardForm({
                 value={values[field.name]}
                 onChange={(e) => updateField(field.name, e.target.value)}
               />
+              {pending.includes(field.name) && (
+                <PendingTranslationNote
+                  onReviewed={() => markReviewed(field.name)}
+                />
+              )}
             </FormField>
           ))}
         </CardContent>

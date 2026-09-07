@@ -284,6 +284,7 @@ describe("price_standards CRUD", () => {
         "id",
         "max_price",
         "min_price",
+        "mt_pending",
         "name_en",
         "name_ja",
         "name_ko",
@@ -293,6 +294,39 @@ describe("price_standards CRUD", () => {
         "updated_at",
       ].sort(),
     );
+    // A person typed every fixture name, so nothing is pending review.
+    expect(doc.mt_pending).toEqual([]);
+  });
+
+  it("persists and reads back which names are machine translated", async () => {
+    // The auto-translate flow: the form fills Korean and Russian from Thai and
+    // flags both. The app must be able to see the flag, or it will show an
+    // unreviewed machine translation to a tourist.
+    await createPriceStandard(priceInput({ mt_pending: ["name_ko", "name_ru"] }));
+    expect(docIn("price_standards", "zz_test_dish")!.mt_pending).toEqual([
+      "name_ko",
+      "name_ru",
+    ]);
+    const item = await getPriceStandard("zz_test_dish");
+    expect(item?.mt_pending).toEqual(["name_ko", "name_ru"]);
+
+    // Reviewing clears it, and the cleared list is what gets written — not the
+    // old one carried forward.
+    await updatePriceStandard(
+      "zz_test_dish",
+      priceInput({ mt_pending: ["name_ru"] }),
+    );
+    expect(docIn("price_standards", "zz_test_dish")!.mt_pending).toEqual(["name_ru"]);
+  });
+
+  it("reads a pre-2026-09-06 document with no mt_pending as fully reviewed", async () => {
+    // Every seeded dish predates the field. Absent must mean "nothing
+    // pending", never an error and never `undefined` reaching the form.
+    const doc = resolveSentinels({ ...priceInput(), updated_at: FieldValue.serverTimestamp() });
+    delete doc.mt_pending;
+    collectionMap("price_standards")["zz_test_dish"] = doc;
+    const item = await getPriceStandard("zz_test_dish");
+    expect(item?.mt_pending).toEqual([]);
   });
 
   it("refuses to overwrite an existing id on create", async () => {
@@ -875,6 +909,7 @@ describe("alert_zones CRUD", () => {
     expect(Object.keys(row!).sort()).toEqual([
       "id",
       "name",
+      "pending_count",
       "point_count",
       "radius_km",
       "risk_level",
@@ -897,6 +932,28 @@ describe("alert_zones CRUD", () => {
       `saveAlertZone dropped ${missing.join(", ")} — the schema validates ` +
         `these fields but the Firestore write does not persist them`,
     ).toEqual([]);
+  });
+
+  it("persists which descriptions are machine translated, and reads absent as none", async () => {
+    await saveAlertZone(
+      zoneInput({ mt_pending: ["description_zh", "description_ja"] }),
+      "create",
+    );
+    expect(docIn("alert_zones", "zz_test_zone")!.mt_pending).toEqual([
+      "description_zh",
+      "description_ja",
+    ]);
+    expect((await getAlertZone("zz_test_zone"))?.mt_pending).toEqual([
+      "description_zh",
+      "description_ja",
+    ]);
+    // The list row carries the count so the table can badge the zone.
+    expect((await listAlertZones())[0]?.pending_count).toBe(2);
+
+    // All 193 live zones predate the field.
+    delete docIn("alert_zones", "zz_test_zone")!.mt_pending;
+    expect((await getAlertZone("zz_test_zone"))?.mt_pending).toEqual([]);
+    expect((await listAlertZones())[0]?.pending_count).toBe(0);
   });
 
   it("round-trips through getAlertZone and deletes", async () => {

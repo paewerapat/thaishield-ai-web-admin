@@ -5,6 +5,7 @@ import { DeleteRowButton } from "@/components/admin/delete-row-button";
 import { ListPagination } from "@/components/admin/list-pagination";
 import { ListToolbar } from "@/components/admin/list-toolbar";
 import { PageHeader } from "@/components/admin/page-header";
+import { PendingTranslationBadge } from "@/components/admin/pending-translation-note";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { TableEmptyState } from "@/components/admin/table-empty-state";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,16 @@ const LIST: ListConfig<AlertZoneListRow> = {
     { key: "points", label: "Points", get: (row) => row.point_count },
   ],
   filters: [
+    {
+      // Every zone still carrying an unread machine translation, in one view.
+      key: "translations",
+      label: "Translations",
+      options: [
+        { value: "pending", label: "pending review" },
+        { value: "reviewed", label: "all reviewed" },
+      ],
+      get: (row) => (row.pending_count > 0 ? "pending" : "reviewed"),
+    },
     {
       key: "risk",
       label: "Risk",
@@ -156,7 +167,10 @@ export default async function AlertZonesPage({
               ) : (
                 result.rows.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.name}
+                      <PendingTranslationBadge count={item.pending_count} />
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {item.id}
                     </TableCell>

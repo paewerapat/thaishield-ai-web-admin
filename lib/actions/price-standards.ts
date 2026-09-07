@@ -55,6 +55,9 @@ function fromFirestore(
     min_price: data.min_price,
     max_price: data.max_price,
     category: data.category,
+    // Absent on every document written before 2026-09-06; absent means no
+    // machine translation is waiting, which is true of all of them.
+    mt_pending: Array.isArray(data.mt_pending) ? data.mt_pending : [],
   };
 
   // Carried so the update path can write it back; see updatePriceStandard.
