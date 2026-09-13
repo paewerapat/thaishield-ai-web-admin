@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -63,6 +63,21 @@ describe("the public legal pages describe the plans that actually exist", () => 
     expect(terms).toContain("never renews");
     expect(terms).toContain("run continuously from the time of purchase");
     expect(terms).toContain("nothing to cancel");
+  });
+
+  it("the support page (the App Store Support URL) matches the same plans", () => {
+    const support = flatten(readFileSync("app/support/page.tsx", "utf8"));
+    expect(support).toContain("auto-renewing monthly subscription");
+    expect(support).toContain("14-day pass");
+    expect(support).toContain("สมาชิกรายเดือนแบบต่ออายุอัตโนมัติ");
+    expect(support).toContain("บัตรผ่าน 14 วัน");
+    expect(support).not.toMatch(/\bweekly\b/i);
+    // Apple rejects a Support URL without real contact information.
+    expect(support).toContain("support@thaishieldapp.com");
+    // Restore behaviour must agree with /terms §5.
+    expect(support).toContain("restores on Android only");
+    // Must stay public: nothing outside /admin is behind auth.
+    expect(existsSync("app/admin/support")).toBe(false);
   });
 
   it("the terms still state the renewal and where to cancel it", () => {

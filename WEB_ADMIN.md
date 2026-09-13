@@ -499,8 +499,10 @@ and an App Users page sitting between two Firestore editors reads as a form
 somebody forgot to fill in, with its empty state reading as a bug rather than as
 "nobody has opened the app yet".
 
-🚨 **They must stay under `/admin`.** Unlike `/terms` and `/privacy`, which are
-public on purpose, these pages list every install id and every transaction in the
+🚨 **They must stay under `/admin`.** Unlike `/terms`, `/privacy` and `/support`
+(added 2026-09-14 as the App Store Connect Support URL; contact email, cancel /
+restore / refund / data-deletion answers in Thai and English, pinned by
+`lib/legal-pages-billing.test.ts`), which are public on purpose, these pages list every install id and every transaction in the
 project. Auth is enforced in `app/admin/layout.tsx`, so moving either file
 outside that tree publishes both. `components/admin/module-meta.test.ts` fails if
 one ever does.
