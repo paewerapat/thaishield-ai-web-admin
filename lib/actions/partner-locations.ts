@@ -12,6 +12,8 @@ import {
   assertValidImageFile,
   extensionForImageType,
   partnerLocationInputSchema,
+  PRICE_TIER_NONE,
+  toFirestoreDocument,
   type PartnerLocation,
 } from "@/lib/schemas/partner-locations";
 import { actionError, type ActionResult } from "./action-result";
@@ -50,6 +52,8 @@ function fromFirestore(
     name_ko: "",
     name_ru: "",
     name_ja: "",
+    // A place with no price tier is stored without the field.
+    price_tier: PRICE_TIER_NONE,
     ...data,
     id,
   } as PartnerLocation;
@@ -175,7 +179,9 @@ export async function savePartnerLocation(
       imageUrl = await uploadPartnerImage(parsed.id, imageFile);
     }
 
-    await ref.set({ ...parsed, image_url: imageUrl });
+    // `set` replaces the whole document, so a tier switched to "none" loses
+    // its old `price_tier` field here rather than lingering.
+    await ref.set(toFirestoreDocument({ ...parsed, image_url: imageUrl }));
     revalidatePath(LIST_PATH);
     return { ok: true };
   } catch (error) {

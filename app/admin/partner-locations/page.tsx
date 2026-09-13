@@ -22,7 +22,9 @@ import {
   listPartnerLocations,
 } from "@/lib/actions/partner-locations";
 import {
-  PARTNER_LOCATION_PRICE_TIERS,
+  PARTNER_LOCATION_PRICE_TIER_LABELS,
+  PARTNER_LOCATION_PRICE_TIER_OPTIONS,
+  PRICE_TIER_NONE,
   PARTNER_LOCATION_TYPES,
   type PartnerLocation,
 } from "@/lib/schemas/partner-locations";
@@ -65,9 +67,9 @@ const LIST: ListConfig<PartnerLocation> = {
     {
       key: "tier",
       label: "Tier",
-      options: PARTNER_LOCATION_PRICE_TIERS.map((value) => ({
+      options: PARTNER_LOCATION_PRICE_TIER_OPTIONS.map((value) => ({
         value,
-        label: value,
+        label: PARTNER_LOCATION_PRICE_TIER_LABELS[value],
       })),
       get: (row) => row.price_tier,
     },
@@ -161,7 +163,11 @@ export default async function PartnerLocationsPage({
                     {item.rating.toFixed(1)}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge value={item.price_tier} />
+                    {item.price_tier === PRICE_TIER_NONE ? (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    ) : (
+                      <StatusBadge value={item.price_tier} />
+                    )}
                   </TableCell>
                   <TableCell>
                     {item.is_verified ? (

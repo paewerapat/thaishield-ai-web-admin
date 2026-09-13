@@ -6,6 +6,10 @@ import {
   PARTNER_LOCATION_TYPE_LABELS,
   PARTNER_LOCATION_TYPES,
   partnerLocationInputSchema,
+  PRICE_TIER_NONE,
+  toFirestoreDocument,
+  typeHasPriceTier,
+  TYPES_WITHOUT_PRICE_TIER,
 } from "./partner-locations";
 
 function validInput(overrides: Partial<Record<string, unknown>> = {}) {
@@ -128,6 +132,37 @@ describe("partnerLocationInputSchema", () => {
       partnerLocationInputSchema.safeParse(validInput({ price_tier: "expensive" }))
         .success,
     ).toBe(false);
+  });
+
+  it("treats a missing or blank price_tier as none", () => {
+    for (const price_tier of [undefined, ""]) {
+      const result = partnerLocationInputSchema.safeParse(validInput({ price_tier }));
+      expect(result.success).toBe(true);
+      expect(result.data?.price_tier).toBe(PRICE_TIER_NONE);
+    }
+  });
+
+  it("forces none for every type without a price tier, and only those", () => {
+    for (const type of PARTNER_LOCATION_TYPES) {
+      const parsed = partnerLocationInputSchema.parse(
+        validInput({ type, price_tier: "high" }),
+      );
+      expect(parsed.price_tier, type).toBe(typeHasPriceTier(type) ? "high" : "none");
+    }
+    // The three places the client named must be in the list.
+    for (const type of ["hospital", "police", "transport"]) {
+      expect(TYPES_WITHOUT_PRICE_TIER).toContain(type);
+    }
+  });
+
+  it("never writes the string none to Firestore", () => {
+    const doc = toFirestoreDocument(
+      partnerLocationInputSchema.parse(validInput({ price_tier: "none" })),
+    );
+    expect("price_tier" in doc).toBe(false);
+    expect(
+      toFirestoreDocument(partnerLocationInputSchema.parse(validInput())).price_tier,
+    ).toBe("fair");
   });
 
   it("rejects an id with uppercase or spaces", () => {

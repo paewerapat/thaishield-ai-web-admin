@@ -109,10 +109,17 @@ set server-side on every write (never trust a client-supplied timestamp).
   type:         string,        // see PARTNER_LOCATION_TYPES
   rating:       number,        // 0.0 - 5.0
   is_verified:  boolean,
-  price_tier:   string,        // "fair" | "caution" | "high"
+  price_tier?:  string,        // OPTIONAL: "fair" | "caution" | "high", or absent
   image_url:    string
 }
 ```
+**`price_tier` is optional since 2026-09-13.** The form offers "Not applicable", and hides
+the field entirely for `TYPES_WITHOUT_PRICE_TIER` (transport, hospital, police,
+tourist_police, atm_bank, tourist_info), where the schema forces it. "Not applicable" is
+saved by **omitting the field** (`toFirestoreDocument`), never as the string `none` —
+app builds ≤ 1.1.29 treat any non-`fair` string as "above typical range". Mirrors
+`PartnerCategory.hasPriceTier` in the Flutter repo.
+
 Admin screen: CRUD with a **real photo upload** to Firebase Storage (not a hotlinked URL
 field) — on upload, store the resulting Storage download URL into `image_url`. A map picker
 (or manual lat/lng input) sets `lat`/`lng`.

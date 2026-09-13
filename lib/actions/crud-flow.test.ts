@@ -746,7 +746,65 @@ describe("partner_locations CRUD", () => {
       "Renamed",
     );
   });
+
+  // Client report 2026-09-13: hospitals, police stations and transport have no
+  // price, and the required Fair/Caution/High picker blocked saving them.
+  describe("places with no price tier", () => {
+    it("stores a hospital WITHOUT price_tier, whatever the form sent", async () => {
+      for (const price_tier of ["fair", "high", "none", ""]) {
+        expect(
+          await savePartnerLocation(
+            partnerForm({ id: "zz_hospital", type: "hospital", price_tier }),
+            mode(price_tier),
+          ),
+          price_tier,
+        ).toEqual({ ok: true });
+        // 🚨 Absent, never the string "none": app builds ≤1.1.29 show "above
+        // typical range" for any value other than "fair" or a missing field.
+        expect("price_tier" in docIn("partner_locations", "zz_hospital")!).toBe(false);
+      }
+    });
+
+    it("lets a commercial place opt out with “Not applicable”", async () => {
+      await savePartnerLocation(partnerForm({ price_tier: "none" }), "create");
+      expect("price_tier" in docIn("partner_locations", "zz_test_partner")!).toBe(false);
+    });
+
+    it("drops an old price_tier when a place is switched to none", async () => {
+      await savePartnerLocation(partnerForm({ price_tier: "caution" }), "create");
+      await savePartnerLocation(
+        partnerForm({ price_tier: "none" }),
+        "edit",
+        "zz_test_partner",
+      );
+      expect("price_tier" in docIn("partner_locations", "zz_test_partner")!).toBe(false);
+    });
+
+    it("opens and re-saves a stored document that has no price_tier", async () => {
+      docsOf("partner_locations")["zz_police"] = {
+        name: "Police Station",
+        lat: 13.75,
+        lng: 100.5,
+        type: "police",
+        rating: 0,
+        is_verified: false,
+        image_url: "",
+      };
+      const loaded = await getPartnerLocation("zz_police");
+      expect(loaded?.price_tier).toBe("none");
+      expect(
+        await savePartnerLocation(
+          partnerForm({ id: "zz_police", type: "police", price_tier: "" }),
+          "edit",
+          "zz_police",
+        ),
+      ).toEqual({ ok: true });
+    });
+  });
 });
+
+const mode = (tier: string): "create" | "edit" =>
+  tier === "fair" ? "create" : "edit";
 
 // --- alert_zones ------------------------------------------------------------
 

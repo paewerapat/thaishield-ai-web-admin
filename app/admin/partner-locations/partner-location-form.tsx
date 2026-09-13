@@ -24,10 +24,12 @@ import {
 } from "@/components/ui/select";
 import { savePartnerLocation } from "@/lib/actions/partner-locations";
 import {
-  PARTNER_LOCATION_PRICE_TIERS,
+  PARTNER_LOCATION_PRICE_TIER_LABELS,
+  PARTNER_LOCATION_PRICE_TIER_OPTIONS,
   PARTNER_LOCATION_TYPE_LABELS,
   PARTNER_LOCATION_TYPES,
   partnerLocationInputSchema,
+  typeHasPriceTier,
   type PartnerLocationInput,
 } from "@/lib/schemas/partner-locations";
 
@@ -65,7 +67,7 @@ function toFieldValues(input?: PartnerLocationInput): FieldValues {
     type: input.type,
     rating: String(input.rating),
     is_verified: input.is_verified,
-    price_tier: input.price_tier,
+    price_tier: input.price_tier ?? "none",
     image_url: input.image_url,
   };
 }
@@ -129,7 +131,7 @@ export function PartnerLocationForm({
     formData.set("type", parsed.data.type);
     formData.set("rating", String(parsed.data.rating));
     formData.set("is_verified", String(parsed.data.is_verified));
-    formData.set("price_tier", parsed.data.price_tier);
+    formData.set("price_tier", parsed.data.price_tier ?? "");
     formData.set("existing_image_url", parsed.data.image_url);
     if (imageFile) formData.set("image", imageFile);
 
@@ -225,27 +227,43 @@ export function PartnerLocationForm({
             </Select>
           </FormField>
 
-          <FormField
-            label="Price tier"
-            htmlFor="price_tier"
-            error={fieldErrors.price_tier}
-          >
-            <Select
-              value={values.price_tier}
-              onValueChange={(v) => updateField("price_tier", v)}
+          {/* Hidden for places with no price to rate (hospital, police,
+              transport…); the schema stores those without a tier whatever
+              the dropdown last held. */}
+          {typeHasPriceTier(values.type) ? (
+            <FormField
+              label="Price tier"
+              htmlFor="price_tier"
+              hint="Optional. Choose “Not applicable” if this place has no prices."
+              error={fieldErrors.price_tier}
             >
-              <SelectTrigger id="price_tier">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PARTNER_LOCATION_PRICE_TIERS.map((t) => (
-                  <SelectItem key={t} value={t} className="capitalize">
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormField>
+              <Select
+                value={values.price_tier}
+                onValueChange={(v) => updateField("price_tier", v)}
+              >
+                <SelectTrigger id="price_tier">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PARTNER_LOCATION_PRICE_TIER_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {PARTNER_LOCATION_PRICE_TIER_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+          ) : (
+            <FormField label="Price tier" htmlFor="price_tier">
+              <p id="price_tier" className="py-2 text-sm text-muted-foreground">
+                Not applicable for{" "}
+                {PARTNER_LOCATION_TYPE_LABELS[
+                  values.type as keyof typeof PARTNER_LOCATION_TYPE_LABELS
+                ] ?? values.type}
+                .
+              </p>
+            </FormField>
+          )}
 
           <FormField
             label="Rating"

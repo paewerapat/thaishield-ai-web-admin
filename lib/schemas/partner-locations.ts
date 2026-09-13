@@ -43,8 +43,47 @@ export const PARTNER_LOCATION_TYPE_LABELS: Record<PartnerLocationType, string> =
   };
 
 export const PARTNER_LOCATION_PRICE_TIERS = ["fair", "caution", "high"] as const;
+
+/// "No price tier" — a hospital, a police station or a bus stop has no price
+/// to rate. 🚨 This value is never written to Firestore: the save path drops
+/// the `price_tier` field instead (see `toFirestoreDocument`). Builds up to
+/// 1.1.29 read a missing field as "fair" but ANY other string as "above typical
+/// range", so storing "none" would put an orange price warning on a hospital in
+/// every app already installed.
+export const PRICE_TIER_NONE = "none";
+
+export const PARTNER_LOCATION_PRICE_TIER_OPTIONS = [
+  ...PARTNER_LOCATION_PRICE_TIERS,
+  PRICE_TIER_NONE,
+] as const;
 export type PartnerLocationPriceTier =
-  (typeof PARTNER_LOCATION_PRICE_TIERS)[number];
+  (typeof PARTNER_LOCATION_PRICE_TIER_OPTIONS)[number];
+
+export const PARTNER_LOCATION_PRICE_TIER_LABELS: Record<
+  PartnerLocationPriceTier,
+  string
+> = {
+  fair: "Fair",
+  caution: "Caution",
+  high: "High",
+  none: "Not applicable",
+};
+
+/// Types that never carry a price tier. The form hides the field for these and
+/// the schema forces `none`, whatever was submitted. Mirrored by
+/// `PartnerCategory.hasPriceTier` in the Flutter repo — change both together.
+export const TYPES_WITHOUT_PRICE_TIER: readonly PartnerLocationType[] = [
+  "transport",
+  "hospital",
+  "police",
+  "tourist_police",
+  "atm_bank",
+  "tourist_info",
+];
+
+export function typeHasPriceTier(type: string): boolean {
+  return !(TYPES_WITHOUT_PRICE_TIER as readonly string[]).includes(type);
+}
 
 const idPattern = /^[a-z0-9_]+$/;
 
@@ -85,9 +124,14 @@ export const partnerLocationInputSchema = z.object({
     .min(0, "Rating must be between 0.0 and 5.0")
     .max(5, "Rating must be between 0.0 and 5.0"),
   is_verified: z.boolean(),
-  price_tier: z.enum(PARTNER_LOCATION_PRICE_TIERS, {
-    error: `Price tier must be one of: ${PARTNER_LOCATION_PRICE_TIERS.join(", ")}`,
-  }),
+  // Optional: blank or missing means "none". A document with no `price_tier`
+  // (every non-commercial place) must still open and save in the edit form.
+  price_tier: z.preprocess(
+    (v) => (v === undefined || v === null || v === "" ? PRICE_TIER_NONE : v),
+    z.enum(PARTNER_LOCATION_PRICE_TIER_OPTIONS, {
+      error: `Price tier must be one of: ${PARTNER_LOCATION_PRICE_TIER_OPTIONS.join(", ")}`,
+    }),
+  ),
   // Written by the server after upload (lib/actions/partner-locations.ts) —
   // never a client-supplied hotlinked URL, per WEB_ADMIN.md §2/§3.
   image_url: z
@@ -95,10 +139,23 @@ export const partnerLocationInputSchema = z.object({
     .trim()
     .url("Must be a valid URL")
     .or(z.literal("")),
-});
+}).transform((data) =>
+  typeHasPriceTier(data.type)
+    ? data
+    : { ...data, price_tier: PRICE_TIER_NONE as PartnerLocationPriceTier },
+);
 
 export type PartnerLocationInput = z.infer<typeof partnerLocationInputSchema>;
 export type PartnerLocation = PartnerLocationInput;
+
+/// The document as stored. `none` is expressed by the field's absence — see
+/// PRICE_TIER_NONE for why the string itself must never reach Firestore.
+export function toFirestoreDocument(
+  data: PartnerLocationInput,
+): Record<string, unknown> {
+  const { price_tier, ...rest } = data;
+  return price_tier === PRICE_TIER_NONE ? rest : { ...rest, price_tier };
+}
 
 // --- Image upload constraints (pure/testable — kept separate from the
 // actual Firebase Storage IO in lib/actions/partner-locations.ts) ---
