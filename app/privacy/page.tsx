@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     "How the ThaiShield AI mobile app handles location, camera, microphone and purchase data.",
 };
 
-const LAST_UPDATED = "1 กันยายน 2026 / 1 September 2026";
+const LAST_UPDATED = "16 กันยายน 2026 / 16 September 2026";
 const CONTACT_EMAIL = "support@thaishieldapp.com";
 
 export default function PrivacyPolicyPage() {
@@ -282,6 +282,47 @@ function ThaiPolicy() {
             </>,
           ]}
         />
+
+        <h4 className="mt-6 text-base font-semibold text-foreground">
+          5.1 ข้อมูลที่ส่งไปประมวลผลด้วยปัญญาประดิษฐ์ (AI) ของ Google
+        </h4>
+        <p>
+          สองฟีเจอร์ของแอปส่งข้อมูลที่คุณสร้างขึ้นไปยังบริการ AI ของ Google LLC
+          เพื่อประมวลผล และ<strong>แอปจะขอความยินยอมจากคุณในแอปก่อนใช้ครั้งแรก</strong>{" "}
+          แยกจากการขอสิทธิ์กล้องและไมโครโฟนของระบบปฏิบัติการ
+        </p>
+        <Bullets
+          items={[
+            <>
+              <strong>สแกนราคา</strong> — ภาพที่คุณถ่าย และตำแหน่งโดยประมาณของคุณ
+              (เฉพาะเมื่อคุณอนุญาตตำแหน่ง) ส่งไปยัง <strong>Gemini API</strong>{" "}
+              เพื่อระบุชื่อเมนูหรืออ่านข้อความบนป้ายราคา
+              ตำแหน่งใช้เพียงช่วยแยกชื่อเมนูตามภูมิภาค ไม่ได้ใช้กำหนดราคา
+            </>,
+            <>
+              <strong>ช่วยเหลือด้วยเสียง (SOS)</strong> — เสียงที่คุณบันทึกส่งไปยัง{" "}
+              <strong>Cloud Speech-to-Text API</strong> เพื่อถอดเป็นข้อความ
+              และข้อความนั้นส่งไปยัง <strong>Gemini API</strong> เพื่อแปลเป็นภาษาไทย
+            </>,
+          ]}
+        />
+        <p>
+          ข้อมูลเหล่านี้ใช้เพื่อสร้างผลลัพธ์ให้คุณในครั้งนั้นเท่านั้น
+          เราไม่เก็บภาพ ไฟล์เสียง หรือข้อความที่ถอดได้ไว้ในระบบของเรา
+          และไม่ส่งรหัสประจำการติดตั้ง ชื่อ หรือข้อมูลระบุตัวตนใด ๆ ไปพร้อมกัน
+          Google ประมวลผลข้อมูลในฐานะผู้ให้บริการภายใต้ข้อกำหนดการใช้บริการและนโยบายความเป็นส่วนตัวของ
+          Google ซึ่งคุณอ่านได้ที่{" "}
+          <a className="text-primary underline" href="https://policies.google.com/privacy">
+            policies.google.com/privacy
+          </a>
+        </p>
+        <p>
+          <strong>คุณถอนความยินยอมได้ทุกเมื่อ</strong> ที่หน้าโปรไฟล์ในแอป
+          (สวิตช์ &quot;การประมวลผลด้วย AI&quot;) เมื่อปิด แอปจะไม่ส่งภาพหรือเสียงของคุณออกไปอีก
+          และจะถามใหม่เมื่อคุณกดใช้ฟีเจอร์นั้นครั้งถัดไป
+          ฟีเจอร์สแกนราคาและช่วยเหลือด้วยเสียงจะใช้ไม่ได้ระหว่างที่ปิด
+          ส่วนแผนที่ เรดาร์ และส่วนอื่นของแอปยังใช้ได้ตามปกติ
+        </p>
       </Section>
 
       <Section heading="6. สิ่งที่เราไม่ทำ">
@@ -493,6 +534,54 @@ function EnglishPolicy() {
             </>,
           ]}
         />
+
+        <h4 className="mt-6 text-base font-semibold text-foreground">
+          5.1 Content processed by Google&rsquo;s AI services
+        </h4>
+        <p>
+          Two features send content you create to AI services operated by
+          Google LLC, and{" "}
+          <strong>the app asks for your consent inside the app before the first use</strong>
+          , separately from the operating system&rsquo;s camera and microphone
+          permissions.
+        </p>
+        <Bullets
+          items={[
+            <>
+              <strong>Price scanner</strong> — the photo you take, and your
+              approximate location if you have allowed location access, are sent
+              to the <strong>Gemini API</strong> to identify the dish or read the
+              text on a price sign. The location is used only to tell regional
+              dish names apart; it is never used to set a price.
+            </>,
+            <>
+              <strong>Voice assistance (SOS)</strong> — your recording is sent to
+              the <strong>Cloud Speech-to-Text API</strong> to turn it into text,
+              and that text is sent to the <strong>Gemini API</strong> to
+              translate it into Thai.
+            </>,
+          ]}
+        />
+        <p>
+          This content is used only to produce your result at that moment. We
+          do not keep your photos, recordings or transcripts on our systems, and
+          no installation identifier, name or other identifying data is sent
+          with them. Google processes the content as a service provider under
+          Google&rsquo;s terms of service and privacy policy, which you can read
+          at{" "}
+          <a className="text-primary underline" href="https://policies.google.com/privacy">
+            policies.google.com/privacy
+          </a>
+          .
+        </p>
+        <p>
+          <strong>You can withdraw this consent at any time</strong> on the
+          Profile tab of the app (the &quot;AI processing&quot; switch). While it
+          is off, the app sends no photo or recording anywhere and asks you again
+          the next time you start either feature. The price scanner and voice
+          assistance do not work while it is off; the map, the radar and the rest
+          of the app work as usual.
+        </p>
       </Section>
 
       <Section heading="6. What we do not do">

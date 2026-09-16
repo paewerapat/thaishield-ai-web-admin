@@ -507,6 +507,16 @@ project. Auth is enforced in `app/admin/layout.tsx`, so moving either file
 outside that tree publishes both. `components/admin/module-meta.test.ts` fails if
 one ever does.
 
+🚨 **`/privacy` §5.1 is an App Review requirement, not editorial.** Apple rejected app
+build 1.1.31 on 2026-09-16 (guidelines 5.1.1 / 5.1.2) because the app sends photos and
+voice recordings to Google's AI services (Gemini API, Cloud Speech-to-Text) without
+in-app consent or a clear policy statement. §5.1, in Thai and English, now names the two
+features, the two Google APIs, what each receives, that nothing is kept on our side, and
+that consent is asked in the app before first use and withdrawn from the Profile tab's
+"AI processing" switch. The app's consent sheet links to this page. If the app ever sends
+user content to a third model, add it here in the same change as the app-side
+`AiConsentPurpose` (app repo `CLAUDE.md` §10.4).
+
 Every figure on both pages carries a one-line caveat under it, and that is a rule
 rather than a style choice: a bare number on an admin page is what gets
 screenshotted and quoted, and each of these counts something narrower than its
